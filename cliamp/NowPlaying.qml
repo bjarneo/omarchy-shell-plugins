@@ -23,30 +23,11 @@ Item {
     readonly property int cardRadius: Math.max(0, Style.cornerRadius)
 
     readonly property bool ready: player !== null
-    readonly property bool playing: ready && player.isPlaying
-    readonly property real len: ready && player.lengthSupported ? player.length : 0
-    readonly property real progress: len > 0 ? Math.min(1, livePosition / len) : 0
-    property real livePosition: 0
-
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Q) {
             root.dismissRequested();
             event.accepted = true;
         }
-    }
-
-    Timer {
-        interval: 250
-        running: root.active && root.ready && root.playing
-        repeat: true
-        onTriggered: root.livePosition = root.player.position
-    }
-
-    Connections {
-        target: root.player
-        function onPlaybackStateChanged() { root.livePosition = root.player.position; }
-        function onTrackTitleChanged() { root.livePosition = root.player.position; }
-        function onPositionChanged() { root.livePosition = root.player.position; }
     }
 
     BandStream {
@@ -135,7 +116,7 @@ Item {
             anchors.topMargin: 7
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 26
+            height: 34
             radius: Math.max(0, root.cardRadius - 2)
             color: root.surface
             border.color: root.softEdge
@@ -152,57 +133,6 @@ Item {
             warnColor: root.red
             segH: 2
             segGap: 1
-        }
-
-        Item {
-            id: barWrap
-            anchors.top: visBack.bottom
-            anchors.topMargin: 4
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 6
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width
-                height: 1
-                color: root.dim
-                opacity: 0.28
-                radius: 0
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                height: 1
-                width: parent.width * root.progress
-                color: root.accent
-                radius: 0
-            }
-
-            Rectangle {
-                visible: root.ready && root.len > 0
-                width: 4
-                height: 4
-                radius: 0
-                color: root.accent
-                anchors.verticalCenter: parent.verticalCenter
-                x: Math.max(0, Math.min(parent.width - width,
-                    parent.width * root.progress - width / 2))
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                anchors.topMargin: -4
-                anchors.bottomMargin: -4
-                enabled: root.ready && root.player.canSeek && root.len > 0
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: function(mouse) {
-                    const frac = Math.max(0, Math.min(1, mouse.x / width));
-                    const target = frac * root.len;
-                    root.player.position = target;
-                    root.livePosition = target;
-                }
-            }
         }
     }
 }

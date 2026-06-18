@@ -19,7 +19,6 @@ Start `cliamp`. The card appears at the top right when cliamp starts or changes 
 
 ## Interaction
 
-- Click the progress line to seek.
 - Press `Esc` or `Q` while the card has focus to hide it.
 - Show it again briefly with `omarchy-shell shell call cliamp refresh ""`.
 
