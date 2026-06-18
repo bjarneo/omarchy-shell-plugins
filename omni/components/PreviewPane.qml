@@ -3,7 +3,7 @@ import "../Data.js" as Data
 import "Format.js" as Fmt
 
 // Right-side preview pane. Shown when one of the preview-bearing modes
-// (file, gh, proc, theme, tldr, chat) is active. Surfaces a header
+// (file, GitHub, proc, theme, tldr, chat) is active. Surfaces a header
 // (name + path/status), a hairline, and then a mode-specific body:
 // image / text / meta / tldr-RichText / chat-RichText / readme /
 // process detail / theme swatches.
@@ -32,7 +32,7 @@ Item {
             const it = o.filteredItems[o.selectedIndex];
             if (o.tldrMode) return o.tldrTool;
             if (o.llmMode) return o.chatModel;
-            if (o.ghMode) return o.previewRepo;
+            if (o.githubMode) return o.githubPreviewTitle;
             if (o.procMode) return it ? it.title : "";
             if (o.themeMode) return it ? it.title : "";
             return o.previewPath ? Data.basename(o.previewPath) : "";
@@ -76,7 +76,7 @@ Item {
                 return cmd ? "↵ done  ·  edit task and ↵ to regenerate"
                            : "↵ done  ·  edit prompt and ↵ to ask again";
             }
-            if (o.ghMode) return o.previewRepoUrl;
+            if (o.githubMode) return o.githubPreviewUrl;
             if (o.procMode) return it ? ("pid " + (it.pid || "") + "  ·  ↵ kills (SIGTERM)") : "";
             if (o.themeMode) return it
                 ? (it.isActive ? "ACTIVE  ·  ↵ reapplies" : "↵ applies theme")
@@ -128,7 +128,7 @@ Item {
                                          : "PRESS ENTER TO ASK";
                     return o.chatRunning ? "STREAMING…" : "DONE";
                 }
-                if (o.ghMode)    return "SELECT A REPO OR PR";
+                if (o.githubMode) return "SELECT A REPO OR PR";
                 if (o.procMode)  return "SELECT A PROCESS";
                 if (o.themeMode) return "SELECT A THEME";
                 return o.query.length === 0 ? "PREVIEW APPEARS HERE" : "SELECT A FILE";
@@ -349,8 +349,8 @@ Item {
 
         Text {
             anchors.fill: parent
-            visible: pp.omni.ghMode && pp.omni.previewRepoUrl !== ""
-            text: pp.omni.previewReadme
+            visible: pp.omni.githubMode && pp.omni.githubPreviewUrl !== ""
+            text: pp.omni.githubPreviewText
             color: pp.omni.ink
             font.family: pp.omni.mono
             font.pixelSize: 10 * pp.omni.fontScale

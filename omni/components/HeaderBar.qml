@@ -44,15 +44,15 @@ Item {
                     ? "NO FILES MATCH"
                     : total + " FILE" + (total === 1 ? "" : "S");
             }
-            if (o.ghMode) {
+            if (o.githubMode) {
                 const total = o.filteredItems.length;
                 if (o.query.length === 0) {
-                    if (o.ghRunning && total === 0) return "LOADING PRS…";
+                    if (o.githubRunning && total === 0) return "LOADING PRS…";
                     return total === 0
                         ? "NO OPEN PRS"
                         : total + " OPEN PR" + (total === 1 ? "" : "S");
                 }
-                if (o.ghRunning) return "SEARCHING GITHUB…";
+                if (o.githubRunning) return "SEARCHING GITHUB…";
                 return total === 0
                     ? "NO REPOS MATCH"
                     : total + " REPO" + (total === 1 ? "" : "S");

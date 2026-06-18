@@ -75,7 +75,7 @@ See `omni/README.md` for details.
 
 ```bash
 omarchy plugin validate omni
-qmllint omni/*.qml omni/omni/*.qml
+qmllint omni/*.qml omni/components/*.qml
 ```
 
 ## License

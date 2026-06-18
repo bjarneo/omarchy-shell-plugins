@@ -2,7 +2,7 @@
 
 // Sentinel values for the search/state drills.
 const fileCategory = "Files";
-const ghCategory = "GitHub";
+const githubCategory = "GitHub";
 const favCategory = "Favourites";
 const histCategory = "History";
 const procCategory = "Processes";
@@ -63,12 +63,12 @@ const fileIcons = {
 // Synthetic rows at root level. Activating one sets the categoryFilter
 // instead of executing a command. `target` matches against item.category;
 // "App" is the bucket all .desktop entries land in. fileCategory and
-// ghCategory route to their respective search drills.
+// githubCategory routes to its search drill.
 const categoryNav = [
     { title: "Quick",   icon: "󱎫", category: "Browse", isCategory: true, target: "Quick",       keywords: "quick settings panel tray toggle popup display weather calendar aether screenshots videos brightness volume mute" },
     { title: "Apps",    icon: "󰀻", category: "Browse", isCategory: true, target: "App",         keywords: "apps applications launcher programs software desktop" },
     { title: "Files",   icon: "󰉋", category: "Browse", isCategory: true, target: fileCategory,  keywords: "files file search find folder browse path open image picture document text fd" },
-    { title: "GitHub",  icon: "󰊤", category: "Browse", isCategory: true, target: ghCategory,    keywords: "github gh repo repository search code clone star issue pull request pr open source git" },
+    { title: "GitHub",  icon: "󰊤", category: "Browse", isCategory: true, target: githubCategory, keywords: "github gh repo repository search code clone star issue pull request pr open source git" },
     { title: "Favourites", icon: "󰓎", category: "Browse", isCategory: true, target: favCategory,  keywords: "favourites favorites favs starred pinned bookmarks marked" },
     { title: "History", icon: "󰋚", category: "Browse", isCategory: true, target: histCategory,    keywords: "history recent recents log past activity used opened" },
     { title: "Style",   icon: "󰏘", category: "Browse", isCategory: true, target: "Style",       keywords: "style theme appearance look font background corners waybar screensaver" },

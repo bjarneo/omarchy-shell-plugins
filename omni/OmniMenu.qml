@@ -3,24 +3,24 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import "Data.js" as Data
-import "omni" as Omni
+import "components" as Omni
 
 // Omni-menu palette. Fuses installed apps (.desktop scan) with every
 // `omarchy-menu` action, scored against title, category, and per-entry
 // synonyms (so "wallpaper" finds Background, "reboot" finds Restart).
-// Drill-down rows pivot the list to a category, fd file search, gh repo
+// Drill-down rows pivot the list to a category, fd file search, GitHub repo
 // search, processes, or themes. Toggle via:
 //   omarchy-shell shell toggle omni '{}'
 //
 // Source layout: this file is the entry and keeps all state (search
 // index, scoring, mode flags, IPC, shortcuts, the keyboard handler,
-// and the panel chrome). Visual subtrees live alongside in `omni/`:
-//   omni/HeaderBar.qml       title + count + hint
-//   omni/SearchInput.qml     prompt glyph + query text + caret
-//   omni/ResultList.qml      ListView + row delegate
-//   omni/PreviewPane.qml     preview header + body for all modes
-//   omni/Footer.qml          exec line for the selected item
-//   omni/Format.js           markdown formatters (tldr, chat)
+// and the panel chrome). Visual subtrees live alongside in `components/`:
+//   components/HeaderBar.qml       title + count + hint
+//   components/SearchInput.qml     prompt glyph + query text + caret
+//   components/ResultList.qml      ListView + row delegate
+//   components/PreviewPane.qml     preview header + body for all modes
+//   components/Footer.qml          exec line for the selected item
+//   components/Format.js           markdown formatters (tldr, chat)
 Item {
     id: root
 
@@ -89,7 +89,7 @@ Item {
     // filteredItems pivots to the matching results array, and goUp/Esc
     // unwind via the same path as any other category.
     readonly property bool fileMode: root.categoryFilter === Data.fileCategory
-    readonly property bool ghMode:   root.categoryFilter === Data.ghCategory
+    readonly property bool githubMode: root.categoryFilter === Data.githubCategory
     readonly property bool favMode:  root.categoryFilter === Data.favCategory
     readonly property bool histMode: root.categoryFilter === Data.histCategory
     readonly property bool procMode:  root.categoryFilter === Data.procCategory
@@ -166,19 +166,19 @@ Item {
     // or "reset display" doesn't dismiss the panel mid-glance.
     function longQuickTile(t) {}
 
-    // gh CLI-backed repo search + README preview.
-    GhSearch {
-        id: ghSearch
+    // GitHub CLI-backed repo search and pull-request preview.
+    GitHubSearch {
+        id: githubSearch
         query: root.query
-        active: root.ghMode && !root.tldrMode && !root.llmMode
+        active: root.githubMode && !root.tldrMode && !root.llmMode
         selectedItem: root.filteredItems[root.selectedIndex] || null
     }
-    readonly property alias ghReady:        ghSearch.ready
-    readonly property alias ghItems:        ghSearch.items
-    readonly property alias ghRunning:      ghSearch.running
-    readonly property alias previewRepo:    ghSearch.previewRepo
-    readonly property alias previewRepoUrl: ghSearch.previewRepoUrl
-    readonly property alias previewReadme:  ghSearch.previewReadme
+    readonly property alias githubReady:        githubSearch.ready
+    readonly property alias githubItems:        githubSearch.items
+    readonly property alias githubRunning:      githubSearch.running
+    readonly property alias githubPreviewTitle: githubSearch.previewTitle
+    readonly property alias githubPreviewUrl:   githubSearch.previewUrl
+    readonly property alias githubPreviewText:  githubSearch.previewText
 
     readonly property string sectionIcon: {
         if (root.categoryFilter === "") return "";
@@ -251,7 +251,7 @@ Item {
     readonly property alias chatSubmitted: ollamaChat.submitted
     readonly property alias chatModel:     ollamaChat.model_
 
-    readonly property bool previewActive: root.tldrMode || root.llmMode || root.fileMode || root.ghMode || root.procMode || root.themeMode
+    readonly property bool previewActive: root.tldrMode || root.llmMode || root.fileMode || root.githubMode || root.procMode || root.themeMode
     readonly property bool previewHasContent: {
         if (root.tldrMode) return root.tldrPreview !== "";
         if (root.llmMode) {
@@ -264,8 +264,8 @@ Item {
             if (!root.chatSubmitted) return false;
             return root.chatPreview !== "";
         }
-        if (root.fileMode || root.ghMode)
-            return root.previewPath !== "" || root.previewRepoUrl !== "";
+        if (root.fileMode || root.githubMode)
+            return root.previewPath !== "" || root.githubPreviewUrl !== "";
         if (root.procMode) return processes.previewPid !== "";
         if (root.themeMode) {
             const it = root.filteredItems[root.selectedIndex];
@@ -323,7 +323,7 @@ Item {
     // share the same handler — clearing both is a free no-op for other drills.
     onCategoryFilterChanged: {
         fileSearch.clear();
-        ghSearch.clear();
+        githubSearch.clear();
         tldrSearch.clear();
         ollamaChat.clear();
         // Processes/Themes own their own clear()-on-deactivate via their
@@ -539,11 +539,11 @@ Item {
     }
 
     // Cached at root-level so it isn't reallocated on every keystroke.
-    // Only depends on `nav` and `ghReady`, so re-evaluates once when the
+    // Only depends on `nav` and `githubReady`, so re-evaluates once when the
     // auth probe finishes.
-    readonly property var navRows: root.ghReady
+    readonly property var navRows: root.githubReady
         ? root.nav
-        : root.nav.filter(it => it.target !== Data.ghCategory)
+        : root.nav.filter(it => it.target !== Data.githubCategory)
 
     readonly property var filteredItems: {
         // tldr mode owns the query entirely — its synthetic row is the
@@ -552,10 +552,10 @@ Item {
         // LLM modes are the other query-shape modes; same one-row
         // pivot for both chat (`?`) and command (`$`).
         if (root.llmMode) return root.chatItems;
-        // File and GitHub modes are their own worlds: fd and gh already
+        // File and GitHub modes are their own worlds: fd and GitHub CLI already
         // did the filtering, so we just pass their results through.
         if (root.fileMode) return root.fileItems;
-        if (root.ghMode)   return root.ghItems;
+        if (root.githubMode) return root.githubItems;
 
         const tokens = root.queryTokens;
         const filter = root.categoryFilter;

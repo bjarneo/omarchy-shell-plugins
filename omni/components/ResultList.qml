@@ -201,11 +201,11 @@ Item {
                     if (o.fdRunning) return "SEARCHING…";
                     return "NO FILES MATCH";
                 }
-                if (o.ghMode) {
+                if (o.githubMode) {
                     if (o.query.length === 0) {
-                        return o.ghRunning ? "LOADING PRS…" : "NO OPEN PRS";
+                        return o.githubRunning ? "LOADING PRS…" : "NO OPEN PRS";
                     }
-                    if (o.ghRunning) return "SEARCHING GITHUB…";
+                    if (o.githubRunning) return "SEARCHING GITHUB…";
                     return "NO REPOS MATCH";
                 }
                 if (o.favMode)  return "NO FAVOURITES — CTRL+S TO STAR";
