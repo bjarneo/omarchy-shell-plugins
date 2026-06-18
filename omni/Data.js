@@ -95,8 +95,8 @@ const omarchyItems = [
     // Mirrors the standalone QuickSettings sheet's targets: popup togglers
     // and one-shot device toggles. Reached as a drill-down (Quick) or by
     // typing the action name; Alt+Space binds straight into this category.
-    { title: "Theme",            icon: "󰸌", category: "Quick", keywords: "theme color palette dark light mode appearance look style scheme switcher",              exec: "omarchy-menu theme" },
-    { title: "Background",       icon: "󰸉", category: "Quick", keywords: "background wallpaper image desktop picture backdrop bg",                               exec: "omarchy-menu background" },
+    { title: "Theme",            icon: "󰸌", category: "Quick", keywords: "theme color palette dark light mode appearance look style scheme switcher",              exec: "omarchy-menu summon theme" },
+    { title: "Background",       icon: "󰸉", category: "Quick", keywords: "background wallpaper image desktop picture backdrop bg",                               exec: "omarchy-menu summon background" },
     { title: "Screenshot",       icon: "󰄀", category: "Quick", keywords: "screenshot screenshots capture image shot region screen",                              exec: "omarchy-capture-screenshot" },
     { title: "Screen Record",    icon: "󰑊", category: "Quick", keywords: "screen record recording video capture mp4 gif",                                       exec: "omarchy-capture-screenrecording" },
     { title: "Mute Audio",       icon: "󰝟", category: "Quick", keywords: "mute audio unmute silence toggle volume sound speaker pamixer quick",                  exec: "pamixer -t" },
@@ -106,7 +106,7 @@ const omarchyItems = [
     { title: "System Monitor",   icon: "󰍛", category: "Quick", keywords: "cpu memory process monitor btop top htop performance load activity",                   exec: "omarchy-launch-or-focus-tui btop" },
     { title: "Keybindings",      icon: "󰌌", category: "Quick", keywords: "keybindings shortcuts hotkeys cheatsheet reference help",                              exec: "omarchy-menu-keybindings" },
     { title: "Lock Screen",      icon: "󰌾", category: "Quick", keywords: "lock screen security hyprlock password",                                               exec: "omarchy-system-lock" },
-    { title: "Power Menu",       icon: "󰐥", category: "Quick", keywords: "power menu battery suspend hibernate logout restart reboot shutdown lock",              exec: "omarchy-menu power" },
+    { title: "Power Menu",       icon: "󰐥", category: "Quick", keywords: "power menu battery suspend hibernate logout restart reboot shutdown lock",              exec: "omarchy-menu summon system" },
 
     // ----- Style -----
     { title: "Theme",            icon: "󰸌", category: "Style",   keywords: "theme color palette dark light mode appearance look style scheme switcher", exec: "omarchy-menu theme" },
@@ -296,6 +296,324 @@ function fileIcon(path) {
 function openUrl(url) {
     return "xdg-open " + JSON.stringify(url);
 }
+
+function stripJsonc(raw) {
+    const src = String(raw || "");
+    let out = "";
+    let inString = false;
+    let escaped = false;
+    let lineComment = false;
+    let blockComment = false;
+
+    for (let i = 0; i < src.length; i++) {
+        const c = src.charAt(i);
+        const n = i + 1 < src.length ? src.charAt(i + 1) : "";
+
+        if (lineComment) {
+            if (c === "\n") {
+                lineComment = false;
+                out += c;
+            }
+            continue;
+        }
+        if (blockComment) {
+            if (c === "*" && n === "/") {
+                blockComment = false;
+                i += 1;
+            } else if (c === "\n") {
+                out += c;
+            }
+            continue;
+        }
+        if (inString) {
+            out += c;
+            if (escaped) escaped = false;
+            else if (c === "\\") escaped = true;
+            else if (c === "\"") inString = false;
+            continue;
+        }
+
+        if (c === "\"") {
+            inString = true;
+            out += c;
+            continue;
+        }
+        if (c === "/" && n === "/") {
+            lineComment = true;
+            i += 1;
+            continue;
+        }
+        if (c === "/" && n === "*") {
+            blockComment = true;
+            i += 1;
+            continue;
+        }
+        out += c;
+    }
+
+    return removeTrailingCommas(out);
+}
+
+function removeTrailingCommas(raw) {
+    const src = String(raw || "");
+    let out = "";
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < src.length; i++) {
+        const c = src.charAt(i);
+        if (inString) {
+            out += c;
+            if (escaped) escaped = false;
+            else if (c === "\\") escaped = true;
+            else if (c === "\"") inString = false;
+            continue;
+        }
+        if (c === "\"") {
+            inString = true;
+            out += c;
+            continue;
+        }
+        if (c === ",") {
+            let j = i + 1;
+            while (j < src.length && /\s/.test(src.charAt(j))) j += 1;
+            if (j < src.length && (src.charAt(j) === "}" || src.charAt(j) === "]")) continue;
+        }
+        out += c;
+    }
+
+    return out;
+}
+
+function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseMenuJsonc(raw) {
+    const stripped = stripJsonc(raw);
+    if (!stripped.trim()) return [];
+
+    let parsed;
+    try {
+        parsed = JSON.parse(stripped);
+    } catch (_) {
+        return [];
+    }
+    if (!isPlainObject(parsed)) return [];
+
+    const source = isPlainObject(parsed.items) ? parsed.items : parsed;
+    const out = [];
+    for (let id in source) {
+        const entry = source[id];
+        if (!isPlainObject(entry)) continue;
+        const copy = { id: id };
+        for (let key in entry) copy[key] = entry[key];
+        out.push(copy);
+    }
+    return out;
+}
+
+function normalizeMenuAliases(value) {
+    if (Array.isArray(value)) return value.filter(function(v) { return !!v; });
+    if (typeof value === "string" && value) return [value];
+    return [];
+}
+
+function normalizeMenuItem(raw) {
+    const id = String(raw.id || "");
+    const aliases = normalizeMenuAliases(raw.aliases);
+    let parent = raw.parent;
+    if (parent === undefined)
+        parent = id.indexOf(".") >= 0 ? id.split(".").slice(0, -1).join(".") : "root";
+    if (id === "root") parent = "";
+
+    const action = raw.action === undefined ? "" : String(raw.action || "");
+    const target = raw.target === undefined ? "" : String(raw.target || "");
+    const kind = action ? "action" : (target ? "link" : "menu");
+
+    return {
+        id: id,
+        parent: String(parent || ""),
+        kind: kind,
+        icon: String(raw.icon || ""),
+        label: String(raw.label || id),
+        target: target,
+        keywords: String(raw.keywords || ""),
+        description: String(raw.description || ""),
+        action: action,
+        provider: String(raw.provider || ""),
+        aliases: aliases,
+        when: String(raw.when || ""),
+        checked: String(raw.checked || "")
+    };
+}
+
+function mergeMenuSources(defaultItems, userItems) {
+    const rawById = ({});
+    const order = [];
+    const sources = [defaultItems || [], userItems || []];
+
+    for (let s = 0; s < sources.length; s++) {
+        const source = sources[s];
+        for (let i = 0; i < source.length; i++) {
+            const entry = source[i];
+            const id = entry && entry.id ? String(entry.id) : "";
+            if (!id) continue;
+            if (!rawById[id]) {
+                rawById[id] = { id: id };
+                order.push(id);
+            }
+            const merged = rawById[id];
+            for (let key in entry) {
+                if (key === "id") continue;
+                merged[key] = entry[key];
+            }
+        }
+    }
+
+    if (!rawById.root) {
+        rawById.root = { id: "root", label: "Go" };
+        order.unshift("root");
+    }
+
+    const items = ({});
+    for (let j = 0; j < order.length; j++) {
+        const item = normalizeMenuItem(rawById[order[j]]);
+        item.order = j;
+        items[item.id] = item;
+    }
+    return { items: items, itemOrder: order };
+}
+
+function shellQuote(value) {
+    return "'" + String(value || "").replace(/'/g, "'\\''") + "'";
+}
+
+function searchableToken(value) {
+    return String(value || "").replace(/[._-]+/g, " ");
+}
+
+function menuItem(items, id) {
+    return items && items[id] ? items[id] : null;
+}
+
+function menuTopEntry(items, entry) {
+    let current = entry;
+    let guard = 0;
+    while (current && current.parent && current.parent !== "root" && guard < 32) {
+        current = menuItem(items, current.parent);
+        guard += 1;
+    }
+    return current && current.id !== "root" ? current : null;
+}
+
+function menuPath(items, id) {
+    const labels = [];
+    let current = menuItem(items, id);
+    let guard = 0;
+    while (current && current.id !== "root" && guard < 32) {
+        labels.unshift(current.label);
+        current = menuItem(items, current.parent);
+        guard += 1;
+    }
+    return labels.join(" > ");
+}
+
+function menuParentPath(items, entry) {
+    if (!entry || !entry.parent || entry.parent === "root") return "";
+    return menuPath(items, entry.parent);
+}
+
+function menuLabel(entry, checkedResults) {
+    if (entry && entry.checked && checkedResults && checkedResults[entry.id])
+        return entry.label + " ✓";
+    return entry ? entry.label : "";
+}
+
+function menuEntryVisible(entry, whenResults) {
+    if (!entry) return false;
+    if (!entry.when) return true;
+    const result = whenResults ? whenResults[entry.id] : undefined;
+    return result === undefined ? true : result;
+}
+
+function menuCategory(items, entry) {
+    const id = entry ? entry.id : "";
+    if (id.indexOf("trigger.capture.") === 0) return "Capture";
+    if (id.indexOf("trigger.share.") === 0) return "Share";
+    if (id.indexOf("trigger.toggle.") === 0) return "Toggle";
+
+    const top = menuTopEntry(items, entry);
+    return top ? top.label : "Omarchy";
+}
+
+function menuExec(entry) {
+    if (!entry) return "";
+    if (entry.action) return entry.action;
+    const target = entry.kind === "link" && entry.target ? entry.target : entry.id;
+    return "omarchy-menu summon " + shellQuote(target);
+}
+
+function omarchyMenuRows(items, itemOrder, whenResults, checkedResults) {
+    const rows = [];
+    const order = Array.isArray(itemOrder) ? itemOrder : [];
+    for (let i = 0; i < order.length; i++) {
+        const entry = menuItem(items, order[i]);
+        if (!entry || entry.id === "root") continue;
+        if (entry.id === "apps") continue;
+        if (entry.parent === "root" && entry.kind === "menu") continue;
+        if (!menuEntryVisible(entry, whenResults)) continue;
+
+        const path = menuPath(items, entry.id);
+        const parentPath = menuParentPath(items, entry);
+        const aliases = Array.isArray(entry.aliases) ? entry.aliases.join(" ") : "";
+        const keywords = [
+            searchableToken(entry.id),
+            path,
+            parentPath,
+            aliases,
+            entry.keywords,
+            entry.description,
+            entry.target,
+            entry.provider,
+            entry.action,
+            entry.kind !== "action" ? "submenu menu open" : ""
+        ].join(" ");
+
+        rows.push({
+            title: menuLabel(entry, checkedResults),
+            icon: entry.icon,
+            category: menuCategory(items, entry),
+            keywords: keywords,
+            exec: menuExec(entry),
+            action: entry.action,
+            target: entry.target,
+            provider: entry.provider,
+            menuId: entry.id,
+            menuKind: entry.kind,
+            menuTarget: entry.kind === "link" && entry.target ? entry.target : entry.id,
+            menuPath: path,
+            description: entry.description,
+            aliases: entry.aliases,
+            when: entry.when,
+            checked: entry.checked
+        });
+    }
+    return rows;
+}
+
+function omniExtraItems() {
+    const out = [];
+    for (let i = 0; i < omarchyItems.length; i++) {
+        const item = omarchyItems[i];
+        if (item.category === "Quick"
+            || (item.category === "Capture" && item.title === "Notes")) {
+            out.push(Object.assign({}, item));
+        }
+    }
+    return out;
+}
+
 function formatStars(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1) + "m";
     if (n >= 1000)    return (n / 1000).toFixed(1) + "k";

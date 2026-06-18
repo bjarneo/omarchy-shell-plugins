@@ -66,6 +66,10 @@ Item {
     // surfaces only the ones it actually exposes (so users on a
     // navbar-less setup see nothing instead of broken rows).
     AppScan { id: appScan }
+    OmarchyMenuScan {
+        id: omarchyMenu
+        onScanned: root.omarchy = omarchyMenu.items
+    }
     NavbarApps { id: navbarApps }
     Tuis { id: tuis }
     readonly property alias appsLoaded: appScan.loaded
@@ -285,6 +289,7 @@ Item {
                             : "";
         root.opened = true;
         root.visible_ = true;
+        omarchyMenu.refreshGuards();
         navbarApps.probe();
     }
     function close() {
@@ -304,7 +309,11 @@ Item {
         root.open(JSON.stringify({ category: String(cat || "") }));
         return "ok";
     }
-    function refresh() { appScan.refresh(); return "ok"; }
+    function refresh() {
+        appScan.refresh();
+        omarchyMenu.refresh();
+        return "ok";
+    }
     function goUp() {
         // Step back one level. At root this is a no-op so the caller can
         // chain "goUp or close" without a branch.
@@ -669,7 +678,7 @@ Item {
     }
 
     Component.onCompleted: {
-        root.omarchy = Data.annotate(Data.omarchyItems);
+        root.omarchy = omarchyMenu.items;
         root.nav     = Data.annotate(Data.categoryNav);
     }
 
@@ -679,7 +688,7 @@ Item {
         function toggle(): void { root.toggle() }
         function open(): void { root.open() }
         function close(): void { root.dismiss() }
-        function refresh(): void { appScan.refresh(); }
+        function refresh(): string { return root.refresh(); }
         // Open OmniMenu pre-pivoted to a drill-down category (e.g. "Quick").
         // Lets Hyprland bind a shortcut straight into a category without
         // exposing the visual grid as a separate surface.
