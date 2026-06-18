@@ -108,13 +108,39 @@ omarchy-shell shell call quickapps-hud refresh ""
 
 See `quickapps-hud/README.md` for details.
 
+### `cliamp`
+
+Persistent now-playing card for `cliamp`, loaded inside `omarchy-shell`.
+
+Features:
+
+- Appears at the bottom of each screen while cliamp's MPRIS player exists
+- Previous, play/pause, next, and click-to-seek controls
+- Winamp-style spectrum visualizer powered by `cliamp visstream`
+- Uses Omarchy shell shared colors and fonts through `qs.Commons`
+
+Install from this checkout:
+
+```bash
+mkdir -p ~/.config/omarchy/plugins
+rm -rf ~/.config/omarchy/plugins/cliamp
+cp -a cliamp ~/.config/omarchy/plugins/cliamp
+omarchy plugin validate ~/.config/omarchy/plugins/cliamp
+omarchy plugin enable cliamp
+omarchy-restart-shell
+```
+
+See `cliamp/README.md` for details.
+
 ## Validate
 
 ```bash
 omarchy plugin validate omni
 omarchy plugin validate quickapps-hud
+omarchy plugin validate cliamp
 qmllint omni/*.qml omni/components/*.qml
 qmllint quickapps-hud/*.qml
+qmllint cliamp/*.qml
 ```
 
 ## License

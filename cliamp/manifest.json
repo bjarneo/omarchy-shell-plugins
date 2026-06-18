@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "cliamp",
+  "name": "cliamp Now Playing",
+  "version": "0.1.0",
+  "author": "bjarneo",
+  "license": "MIT",
+  "description": "Persistent Omarchy shell now-playing card for cliamp with MPRIS controls and a spectrum visualizer.",
+  "kinds": ["overlay"],
+  "activation": "persistent",
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Cliamp.qml"
+  }
+}
