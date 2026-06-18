@@ -332,15 +332,15 @@ Item {
     }
 
     // ---------- Icon resolution ----------
-    // `.desktop` Icon field is either an absolute path or an icon-theme
-    // name. Qt's QQmlEngine doesn't know about XDG themes, so theme names
-    // get pushed through Quickshell.iconPath for resolution; absolute paths
-    // just need a file:// prefix. Returns "" when nothing resolves so the
-    // delegate can fall back to its nerd-font glyph.
+    // `.desktop` Icon field is either a URL, an absolute path, or an
+    // icon-theme name. Match Omarchy's launcher resolver so themed icons
+    // use the shell's configured fallback path instead of dropping to glyphs.
     function resolveIconUrl(raw) {
-        if (!raw) return "";
-        if (raw.charAt(0) === "/") return "file://" + raw;
-        return Quickshell.iconPath(raw, "");
+        const value = String(raw || "");
+        if (value.length === 0) return "";
+        if (value.indexOf("file://") === 0 || value.indexOf("image://") === 0) return value;
+        if (value.charAt(0) === "/") return "file://" + value;
+        return Quickshell.iconPath(value, true);
     }
 
     // ---------- Search index annotation ----------
