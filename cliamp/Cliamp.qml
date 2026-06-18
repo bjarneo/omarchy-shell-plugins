@@ -6,8 +6,8 @@ import Quickshell.Wayland
 import qs.Commons
 
 // Persistent Omarchy shell overlay for cliamp's MPRIS player. The plugin stays
-// loaded, but the panel maps only while cliamp is present and not manually
-// hidden through IPC.
+// loaded, then briefly maps a top-right card whenever cliamp starts or changes
+// tracks.
 Item {
     id: root
 
@@ -15,8 +15,10 @@ Item {
     property var manifest: null
     readonly property string pluginId: manifest && manifest.id ? String(manifest.id) : "cliamp"
 
-    property bool manuallyHidden: false
-    readonly property bool opened: !manuallyHidden && cliampPlayer !== null
+    property bool showing: false
+    property int autoHideMs: 4500
+    readonly property int edgeMargin: Style.gapsOut + 24
+    readonly property bool opened: showing && cliampPlayer !== null
 
     readonly property var cliampPlayer: {
         for (let i = 0; i < Mpris.players.values.length; ++i) {
@@ -27,13 +29,43 @@ Item {
         return null;
     }
 
+    onCliampPlayerChanged: {
+        if (cliampPlayer) reveal();
+        else {
+            hideTimer.stop();
+            showing = false;
+        }
+    }
+
+    Component.onCompleted: if (cliampPlayer) reveal()
+
+    function reveal() {
+        if (!cliampPlayer) return;
+        showing = true;
+        hideTimer.restart();
+    }
+
+    Timer {
+        id: hideTimer
+        interval: root.autoHideMs
+        repeat: false
+        onTriggered: root.showing = false
+    }
+
+    Connections {
+        target: root.cliampPlayer
+        function onTrackTitleChanged() { root.reveal(); }
+        function onTrackArtistChanged() { root.reveal(); }
+    }
+
     function open(_payloadJson) {
-        manuallyHidden = false;
+        reveal();
         return "ok";
     }
 
     function close() {
-        manuallyHidden = true;
+        hideTimer.stop();
+        showing = false;
         return "ok";
     }
 
@@ -42,7 +74,7 @@ Item {
     }
 
     function refresh() {
-        manuallyHidden = false;
+        reveal();
         return "ok";
     }
 
@@ -63,25 +95,26 @@ Item {
             screen: modelData
 
             anchors {
-                bottom: true
-                left: true
+                top: true
                 right: true
             }
-            margins { bottom: Style.gapsOut + 8 }
+            margins {
+                top: root.edgeMargin
+                right: root.edgeMargin
+            }
 
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "omarchy-cliamp"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-            implicitHeight: 72
+            implicitWidth: 360
+            implicitHeight: 96
             color: "transparent"
             visible: root.opened
 
             NowPlaying {
-                width: 300
-                height: parent.height
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.fill: parent
                 player: root.cliampPlayer
                 active: panel.visible
                 focus: true

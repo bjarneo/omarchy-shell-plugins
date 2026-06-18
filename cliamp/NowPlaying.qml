@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Commons
 
-// Compact now-playing card for cliamp. Dense Winamp-style layout driven by
+// Compact now-playing card for cliamp. Clean notification layout driven by
 // MPRIS, with visualizer frames from `cliamp visstream`.
 Item {
     id: root
@@ -18,6 +18,7 @@ Item {
     readonly property color green: Color.muted
     readonly property color yellow: Color.accent
     readonly property color red: Color.urgent
+    readonly property int cardRadius: Math.max(0, Style.cornerRadius)
 
     readonly property bool ready: player !== null
     readonly property bool playing: ready && player.isPlaying
@@ -62,62 +63,87 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: 0
-        color: Qt.rgba(root.bg.r, root.bg.g, root.bg.b, 0.94)
+        radius: root.cardRadius
+        color: Qt.rgba(root.bg.r, root.bg.g, root.bg.b, 0.96)
         border.color: root.edge
         border.width: 1
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 1
+        color: root.accent
+        opacity: 0.75
     }
 
     Item {
         id: inner
         anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
-        anchors.topMargin: 5
-        anchors.bottomMargin: 5
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        anchors.topMargin: 10
+        anchors.bottomMargin: 8
 
         Text {
-            id: titleT
+            id: sourceT
             anchors.top: parent.top
             anchors.left: parent.left
-            anchors.right: timeT.left
-            anchors.rightMargin: 8
-            height: 13
+            height: 12
             verticalAlignment: Text.AlignVCenter
-            elide: Text.ElideRight
-            text: root.ready ? (root.player.trackTitle || "Unknown title") : "cliamp: not running"
-            color: root.fg
+            text: "CLIAMP"
+            color: root.accent
             font.family: Style.font.family
-            font.pixelSize: Style.font.body
+            font.pixelSize: Style.font.caption
+            font.letterSpacing: 1.6
             font.bold: true
-            textFormat: Text.PlainText
+            opacity: 0.9
         }
 
         Text {
             id: timeT
             anchors.top: parent.top
             anchors.right: parent.right
-            height: 13
+            height: 12
             verticalAlignment: Text.AlignVCenter
-            text: root.fmt(root.livePosition) + "/" + root.fmt(root.len)
+            text: root.fmt(root.livePosition) + " / " + root.fmt(root.len)
             color: root.dim
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
+            opacity: 0.85
+        }
+
+        Text {
+            id: titleT
+            anchors.top: sourceT.bottom
+            anchors.topMargin: 5
+            anchors.left: parent.left
+            anchors.right: transport.left
+            anchors.rightMargin: 12
+            height: 18
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+            text: root.ready ? (root.player.trackTitle || "Unknown title") : "cliamp: not running"
+            color: root.fg
+            font.family: Style.font.family
+            font.pixelSize: Style.font.title
+            font.bold: true
+            textFormat: Text.PlainText
         }
 
         Row {
             id: transport
-            anchors.top: titleT.bottom
-            anchors.topMargin: 2
+            anchors.verticalCenter: titleT.verticalCenter
             anchors.right: parent.right
-            width: timeT.width
-            height: 16
-            spacing: Math.max(2, (width - 52) / 2)
+            width: 72
+            height: 20
+            spacing: 6
 
             TransportButton {
-                width: 16; height: 16
+                width: 18; height: 20
                 shape: "prev"
-                iconSize: 10
+                iconSize: 10.5
                 enabled: root.ready && root.player.canGoPrevious
                 fgColor: root.dim
                 hoverColor: root.yellow
@@ -125,9 +151,9 @@ Item {
             }
 
             TransportButton {
-                width: 20; height: 16
+                width: 24; height: 20
                 shape: root.playing ? "pause" : "play"
-                iconSize: 12
+                iconSize: 13
                 enabled: root.ready && root.player.canTogglePlaying
                 fgColor: root.accent
                 hoverColor: root.green
@@ -135,9 +161,9 @@ Item {
             }
 
             TransportButton {
-                width: 16; height: 16
+                width: 18; height: 20
                 shape: "next"
-                iconSize: 10
+                iconSize: 10.5
                 enabled: root.ready && root.player.canGoNext
                 fgColor: root.dim
                 hoverColor: root.yellow
@@ -148,11 +174,10 @@ Item {
         Text {
             id: artistT
             anchors.top: titleT.bottom
-            anchors.topMargin: 2
+            anchors.topMargin: 1
             anchors.left: parent.left
-            anchors.right: transport.left
-            anchors.rightMargin: 8
-            height: 16
+            anchors.right: parent.right
+            height: 15
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: root.ready ? (root.player.trackArtist || "") : ""
@@ -160,15 +185,16 @@ Item {
             font.family: Style.font.family
             font.pixelSize: Style.font.bodySmall
             textFormat: Text.PlainText
+            opacity: 0.88
         }
 
         Visualizer {
             id: vis
             anchors.top: artistT.bottom
-            anchors.topMargin: 2
+            anchors.topMargin: 7
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 22
+            height: 18
             bands: stream.bands
             barColor: root.green
             accentColor: root.yellow
@@ -180,17 +206,17 @@ Item {
         Item {
             id: barWrap
             anchors.top: vis.bottom
-            anchors.topMargin: 3
+            anchors.topMargin: 6
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 4
+            height: 6
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width
                 height: 1
                 color: root.dim
-                opacity: 0.45
+                opacity: 0.32
                 radius: 0
             }
 

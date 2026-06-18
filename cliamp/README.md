@@ -1,6 +1,6 @@
 # cliamp Now Playing
 
-Persistent Omarchy shell now-playing card for `cliamp`.
+Top-right Omarchy shell now-playing card for `cliamp`.
 
 ## Quick Start
 
@@ -15,14 +15,14 @@ omarchy plugin enable cliamp
 omarchy-restart-shell
 ```
 
-Start `cliamp`. The card appears at the bottom of each screen when cliamp's MPRIS player is available.
+Start `cliamp`. The card appears at the top right when cliamp starts or changes songs, then hides itself after a few seconds.
 
 ## Controls
 
 - Previous, play/pause, next buttons use cliamp's MPRIS controls.
 - Click the progress line to seek.
 - Press `Esc` or `Q` while the card has focus to hide it.
-- Show it again with `omarchy-shell shell call cliamp refresh ""`.
+- Show it again briefly with `omarchy-shell shell call cliamp refresh ""`.
 
 ## IPC
 

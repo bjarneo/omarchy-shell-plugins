@@ -110,11 +110,11 @@ See `quickapps-hud/README.md` for details.
 
 ### `cliamp`
 
-Persistent now-playing card for `cliamp`, loaded inside `omarchy-shell`.
+Top-right now-playing card for `cliamp`, loaded inside `omarchy-shell`.
 
 Features:
 
-- Appears at the bottom of each screen while cliamp's MPRIS player exists
+- Appears when cliamp starts or changes songs, then hides itself after a few seconds
 - Previous, play/pause, next, and click-to-seek controls
 - Winamp-style spectrum visualizer powered by `cliamp visstream`
 - Uses Omarchy shell shared colors and fonts through `qs.Commons`
