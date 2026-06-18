@@ -17,7 +17,8 @@ Item {
 
     property bool showing: false
     property int autoHideMs: 4500
-    readonly property int edgeMargin: Style.gapsOut + 24
+    readonly property int topMargin: Style.gapsOut + 40
+    readonly property int rightMargin: Style.gapsOut + 24
     readonly property bool opened: showing && cliampPlayer !== null
 
     readonly property var cliampPlayer: {
@@ -99,8 +100,8 @@ Item {
                 right: true
             }
             margins {
-                top: root.edgeMargin
-                right: root.edgeMargin
+                top: root.topMargin
+                right: root.rightMargin
             }
 
             exclusionMode: ExclusionMode.Ignore
