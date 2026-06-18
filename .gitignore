@@ -1,0 +1,8 @@
+# local/editor
+.DS_Store
+*.swp
+*.swo
+
+# transient logs / caches
+*.log
+.cache/

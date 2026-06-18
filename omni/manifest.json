@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "omni",
+  "name": "Omni",
+  "version": "0.1.0",
+  "author": "bjarneo",
+  "license": "MIT",
+  "description": "A standalone Omarchy shell command palette for apps, files, themes, processes, GitHub search, tldr, and local Ollama prompts.",
+  "kinds": ["overlay"],
+  "activation": "on-demand",
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "OmniMenu.qml"
+  }
+}
