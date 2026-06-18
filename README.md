@@ -1,6 +1,6 @@
-# Omarchy Shell Plugins
+# Omarchy Shell Plugins And Quickshell Modules
 
-Personal third-party plugins for `omarchy-shell`.
+Personal third-party plugins and launchers for Omarchy.
 
 ## Quick Start
 
@@ -38,7 +38,7 @@ omarchy plugin add omni --from bjarneo --enable
 
 Omarchy rejects symlinked plugin folders. Use a real copied directory for local testing.
 
-## Plugins
+## Projects
 
 ### `omni`
 
@@ -71,11 +71,39 @@ Optional tools:
 
 See `omni/README.md` for details.
 
+### `quickapps-hud`
+
+Iron Man-style quick-app launcher for Quickshell.
+
+Features:
+
+- Animated hex app ring with a center arc-reactor readout
+- Scanline sweep, HUD corner brackets, target beam, and launch charge flash
+- Uses the active Omarchy theme's `colors.toml` palette
+- Reads apps from `~/.config/omarchy-quickapps-hud/apps.json`, with fallback to older quickapps config files
+
+Install from this checkout:
+
+```bash
+mkdir -p ~/.config/quickshell
+rm -rf ~/.config/quickshell/quickapps-hud
+cp -a quickapps-hud ~/.config/quickshell/quickapps-hud
+```
+
+Launch it:
+
+```bash
+qs -n -c quickapps-hud
+```
+
+See `quickapps-hud/README.md` for details.
+
 ## Validate
 
 ```bash
 omarchy plugin validate omni
 qmllint omni/*.qml omni/components/*.qml
+qmllint quickapps-hud/*.qml
 ```
 
 ## License
