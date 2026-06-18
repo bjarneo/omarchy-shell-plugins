@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Widgets
 
 // Vertical result list. Row delegate handles icon resolution (image
@@ -38,8 +39,8 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: row.isSelected ? rl.omni.rowSel
-                                      : rowMouse.containsMouse ? rl.omni.rowHi
+                color: row.isSelected ? rl.omni.selectedFill
+                                      : rowMouse.containsMouse ? rl.omni.hoverFill
                                                                : "transparent"
                 Behavior on color { ColorAnimation { duration: 40 } }
             }
@@ -48,14 +49,15 @@ Item {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: 2
-                color: rl.omni.seal
+                color: rl.omni.selectedForeground
                 visible: row.isSelected
             }
 
             // Icon slot: themed .desktop icon when one resolves,
             // nerd-font glyph fallback otherwise. IconImage mirrors
             // Omarchy's launcher and handles icon-theme sources better
-            // than a plain Image.
+            // than a plain Image; the layer effect keeps Omni's icon
+            // palette monochrome.
             Item {
                 id: iconText
                 anchors.left: parent.left
@@ -66,7 +68,7 @@ Item {
 
                 readonly property string iconUrl: rl.omni.resolveIconUrl(row.modelData.rawIcon)
                 readonly property bool hasImageIcon: appIcon.status === Image.Ready && iconUrl !== ""
-                readonly property color tint: row.isSelected ? rl.omni.seal : rl.omni.inkDeep
+                readonly property color tint: row.isSelected ? rl.omni.selectedForeground : rl.omni.mutedForeground
 
                 Text {
                     anchors.centerIn: parent
@@ -87,6 +89,12 @@ Item {
                     smooth: true
                     asynchronous: true
                     mipmap: true
+                    layer.enabled: iconText.hasImageIcon
+                    layer.effect: MultiEffect {
+                        colorization: 1.0
+                        colorizationColor: iconText.tint
+                        Behavior on colorizationColor { ColorAnimation { duration: 40 } }
+                    }
                 }
             }
             Text {
@@ -100,7 +108,7 @@ Item {
                 text: row.modelData.isCategory
                       ? row.modelData.title + "  ›"
                       : row.modelData.title
-                color: row.isSelected ? rl.omni.ink : rl.omni.fg
+                color: rl.omni.foreground
                 font.family: rl.omni.mono
                 font.pixelSize: 13 * rl.omni.fontScale
                 font.weight: row.isSelected ? Font.Medium : Font.Light
@@ -115,7 +123,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rl.bookmarks.isFavourite(row.modelData)
                 text: "󰓎"
-                color: rl.omni.seal
+                color: rl.omni.selectedForeground
                 font.family: rl.omni.mono
                 font.pixelSize: 11 * rl.omni.fontScale
             }
@@ -130,7 +138,7 @@ Item {
                 text: row.modelData.rawCategory
                       ? (row.modelData.category || "")
                       : (row.modelData.category || "").toUpperCase()
-                color: row.isSelected ? rl.omni.seal : rl.omni.inkDeep
+                color: row.isSelected ? rl.omni.selectedForeground : rl.omni.mutedForeground
                 opacity: row.isSelected ? 0.95 : 0.65
                 font.family: rl.omni.mono
                 font.pixelSize: 10 * rl.omni.fontScale
@@ -196,7 +204,7 @@ Item {
                 if (o.themeMode) return rl.themes.loaded ? "NO THEMES MATCH" : "LOADING THEMES…";
                 return o.appsLoaded ? "NOTHING MATCHES" : "INDEXING APPS…";
             }
-            color: rl.omni.inkDeep
+            color: rl.omni.mutedForeground
             font.family: rl.omni.mono
             font.pixelSize: 11 * rl.omni.fontScale
             font.letterSpacing: 3

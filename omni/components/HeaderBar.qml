@@ -22,7 +22,7 @@ Item {
         text: header.omni.categoryFilter === ""
               ? "OMNI"
               : "OMNI › " + header.omni.sectionIcon + "  " + header.omni.categoryFilter.toUpperCase()
-        color: header.omni.ink
+        color: header.omni.foreground
         font.family: header.omni.mono
         font.pixelSize: 19 * header.omni.fontScale
         font.letterSpacing: 4
@@ -91,7 +91,7 @@ Item {
                 ? "NO MATCHES"
                 : total + " MATCH" + (total === 1 ? "" : "ES");
         }
-        color: header.omni.inkDeep
+        color: header.omni.mutedForeground
         font.family: header.omni.mono
         font.pixelSize: 11 * header.omni.fontScale
         font.letterSpacing: 2

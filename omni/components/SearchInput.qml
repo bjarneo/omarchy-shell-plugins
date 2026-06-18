@@ -20,7 +20,7 @@ Item {
               : input.omni.procMode ? "󰍛"
               : input.omni.themeMode ? "󰸌"
               : "󰍉"
-        color: input.omni.seal
+        color: input.omni.selectedForeground
         font.family: input.omni.mono
         font.pixelSize: 16 * input.omni.fontScale
     }
@@ -39,7 +39,7 @@ Item {
             if (o.themeMode) return "Type to filter themes…";
             return "Type to search apps, themes, settings…";
         }
-        color: input.omni.query.length === 0 ? input.omni.inkDeep : input.omni.ink
+        color: input.omni.query.length === 0 ? input.omni.mutedForeground : input.omni.foreground
         opacity: input.omni.query.length === 0 ? 0.5 : 1.0
         font.family: input.omni.mono
         font.pixelSize: 14 * input.omni.fontScale
@@ -51,7 +51,7 @@ Item {
         id: caret
         width: 2
         height: 16
-        color: input.omni.seal
+        color: input.omni.selectedForeground
         anchors.verticalCenter: parent.verticalCenter
         x: input.omni.query.length === 0
            ? searchPrompt.x + searchPrompt.width + 10

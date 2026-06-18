@@ -22,7 +22,7 @@ Item {
             if (it.isTheme)     return "↵ omarchy-theme-set " + (it.themeName || "");
             return "$ " + it.exec;
         }
-        color: footer.omni.inkDeep
+        color: footer.omni.mutedForeground
         font.family: footer.omni.mono
         font.pixelSize: 10 * footer.omni.fontScale
         font.letterSpacing: 1

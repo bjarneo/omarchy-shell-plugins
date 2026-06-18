@@ -37,7 +37,7 @@ Item {
             if (o.themeMode) return it ? it.title : "";
             return o.previewPath ? Data.basename(o.previewPath) : "";
         }
-        color: pp.omni.ink
+        color: pp.omni.foreground
         font.family: pp.omni.mono
         font.pixelSize: 13 * pp.omni.fontScale
         font.weight: Font.Medium
@@ -83,7 +83,7 @@ Item {
                 : "";
             return o.previewPath ? Data.tildify(Data.dirname(o.previewPath), o.homeDir) : "";
         }
-        color: pp.omni.inkDeep
+        color: pp.omni.mutedForeground
         font.family: pp.omni.mono
         font.pixelSize: 10 * pp.omni.fontScale
         font.letterSpacing: 1
@@ -97,7 +97,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         height: 1
-        color: pp.omni.sep
+        color: pp.omni.border
         visible: pp.omni.previewHasContent
     }
 
@@ -133,7 +133,7 @@ Item {
                 if (o.themeMode) return "SELECT A THEME";
                 return o.query.length === 0 ? "PREVIEW APPEARS HERE" : "SELECT A FILE";
             }
-            color: pp.omni.inkDeep
+            color: pp.omni.mutedForeground
             font.family: pp.omni.mono
             font.pixelSize: 10 * pp.omni.fontScale
             font.letterSpacing: 3
@@ -160,7 +160,7 @@ Item {
             anchors.fill: parent
             visible: pp.omni.previewKind === "text"
             text: pp.omni.previewText
-            color: pp.omni.ink
+            color: pp.omni.foreground
             font.family: pp.omni.mono
             font.pixelSize: 10 * pp.omni.fontScale
             lineHeight: 1.3
@@ -174,7 +174,7 @@ Item {
             anchors.fill: parent
             visible: pp.omni.previewKind === "meta"
             text: pp.omni.previewMeta
-            color: pp.omni.inkDeep
+            color: pp.omni.mutedForeground
             font.family: pp.omni.mono
             font.pixelSize: 11 * pp.omni.fontScale
             lineHeight: 1.4
@@ -227,10 +227,10 @@ Item {
                 id: tldrPreviewEdit
                 width: tldrPreviewScroll.width
                 text: Fmt.formatTldrHtml(pp.omni.tldrPreview, {
-                    ink: pp.omni.ink, inkDeep: pp.omni.inkDeep,
-                    indigo: pp.omni.indigo, seal: pp.omni.seal
+                    text: pp.omni.foreground, muted: pp.omni.mutedForeground,
+                    code: pp.omni.hoverForeground, accent: pp.omni.selectedForeground
                 })
-                color: pp.omni.ink
+                color: pp.omni.foreground
                 font.family: pp.omni.mono
                 font.pixelSize: 13 * pp.omni.fontScale
                 wrapMode: TextEdit.Wrap
@@ -239,8 +239,8 @@ Item {
                 selectByMouse: true
                 persistentSelection: true
                 activeFocusOnPress: false
-                selectionColor: pp.omni.indigo
-                selectedTextColor: pp.omni.paper
+                selectionColor: pp.omni.hoverForeground
+                selectedTextColor: pp.omni.selectionForeground
             }
         }
 
@@ -306,13 +306,13 @@ Item {
                 id: chatPreviewEdit
                 width: chatPreviewScroll.width
                 // Status messages get dimmed via the baseColor arg;
-                // live response uses the default ink. formatChatHtml
+                // live response uses the default foreground. formatChatHtml
                 // escapes HTML and converts newlines to <br> so plain
                 // status text is safe under RichText too.
                 text: {
                     const o = pp.omni;
-                    const pal = { ink: o.ink, inkDeep: o.inkDeep,
-                                  indigo: o.indigo, seal: o.seal };
+                    const pal = { text: o.foreground, muted: o.mutedForeground,
+                                  code: o.hoverForeground, accent: o.selectedForeground };
                     if (o.chatStatus === "no-ollama")
                         return Fmt.formatChatHtml(
                             "Ollama is not installed.\n\n"
@@ -320,20 +320,20 @@ Item {
                           + "  `yay -S ollama`\n"
                           + "  `sudo systemctl enable --now ollama`\n"
                           + "  `ollama pull " + o.chatModel + "`\n\n"
-                          + "Then return here and try again.", pal, o.inkDeep);
+                          + "Then return here and try again.", pal, o.mutedForeground);
                     if (o.chatStatus === "no-daemon")
                         return Fmt.formatChatHtml(
                             "Ollama is installed but the daemon is not responding.\n\n"
                           + "Press Enter to start it in a terminal. "
-                          + "You can close the terminal once you see the daemon is up.", pal, o.inkDeep);
+                          + "You can close the terminal once you see the daemon is up.", pal, o.mutedForeground);
                     if (o.chatStatus === "no-model")
                         return Fmt.formatChatHtml(
                             "Model `" + o.chatModel + "` is not pulled yet (~1 GB).\n\n"
                           + "Press Enter to fetch it. This is a one-time download; "
-                          + "the weights live at `~/.ollama/models/`.", pal, o.inkDeep);
+                          + "the weights live at `~/.ollama/models/`.", pal, o.mutedForeground);
                     return Fmt.formatChatHtml(o.chatPreview, pal, null);
                 }
-                color: pp.omni.ink
+                color: pp.omni.foreground
                 font.family: pp.omni.mono
                 font.pixelSize: 13 * pp.omni.fontScale
                 wrapMode: TextEdit.Wrap
@@ -342,8 +342,8 @@ Item {
                 selectByMouse: true
                 persistentSelection: true
                 activeFocusOnPress: false
-                selectionColor: pp.omni.indigo
-                selectedTextColor: pp.omni.paper
+                selectionColor: pp.omni.hoverForeground
+                selectedTextColor: pp.omni.selectionForeground
             }
         }
 
@@ -351,7 +351,7 @@ Item {
             anchors.fill: parent
             visible: pp.omni.githubMode && pp.omni.githubPreviewUrl !== ""
             text: pp.omni.githubPreviewText
-            color: pp.omni.ink
+            color: pp.omni.foreground
             font.family: pp.omni.mono
             font.pixelSize: 10 * pp.omni.fontScale
             lineHeight: 1.3
@@ -366,7 +366,7 @@ Item {
             anchors.fill: parent
             visible: pp.omni.procMode && pp.omni.procPreviewText !== ""
             text: pp.omni.procPreviewText
-            color: pp.omni.ink
+            color: pp.omni.foreground
             font.family: pp.omni.mono
             font.pixelSize: 10 * pp.omni.fontScale
             lineHeight: 1.4
@@ -422,7 +422,7 @@ Item {
                     radius: 2
                     color: modelData
                     border.width: 1
-                    border.color: pp.omni.sep
+                    border.color: pp.omni.border
                 }
             }
         }

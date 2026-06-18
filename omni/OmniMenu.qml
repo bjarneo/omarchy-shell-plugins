@@ -36,18 +36,16 @@ Item {
     // not require the desktop/navbar quickshell config.
     property var navbar: null
 
-    readonly property color paper:   theme.paper
-    readonly property color ink:     theme.ink
-    readonly property color inkDeep: theme.inkDeep
-    readonly property color sumi:    theme.inkDeep
-    readonly property color indigo:  theme.indigo
-    readonly property color seal:    theme.seal
-    readonly property color bg:      theme.bg
-    readonly property color fg:      theme.fg
-    readonly property color muted:   theme.muted
-    readonly property color sep:     theme.sep
-    readonly property color rowHi:   theme.rowHi
-    readonly property color rowSel:  theme.rowSel
+    readonly property color background: theme.background
+    readonly property color foreground: theme.foreground
+    readonly property color mutedForeground: theme.mutedForeground
+    readonly property color accent: theme.accent
+    readonly property color hoverForeground: theme.hoverForeground
+    readonly property color selectedForeground: theme.selectedForeground
+    readonly property color selectionForeground: theme.selectionForeground
+    readonly property color border: theme.border
+    readonly property color hoverFill: theme.hoverFill
+    readonly property color selectedFill: theme.selectedFill
 
     // Scoring weights and result cap. omarchy-menu has ~125 entries plus the
     // 12 nav rows plus ~80-200 .desktop apps, so the cap lets a quick
@@ -743,8 +741,8 @@ Item {
             // displays; cardCol implicitHeight covers the search + list +
             // footer block.
             height: Math.min(cardCol.implicitHeight + 34, parent.height * 0.72)
-            color: root.bg
-            border.color: root.sep
+            color: root.background
+            border.color: root.border
             border.width: 1
             radius: root.cornerRadius
             transformOrigin: Item.Center
@@ -986,7 +984,7 @@ Item {
                     bookmarks: bookmarks
                 }
 
-                Rectangle { width: parent.width; height: 1; color: root.sep }
+                Rectangle { width: parent.width; height: 1; color: root.border }
 
                 Omni.SearchInput { omni: root }
 
@@ -994,7 +992,7 @@ Item {
                     visible: !root.quickMode
                     width: parent.width
                     height: 1
-                    color: root.sep
+                    color: root.border
                 }
 
                 // Fixed row height in the delegate keeps positionViewAtIndex
@@ -1039,7 +1037,7 @@ Item {
                         anchors.bottom: parent.bottom
                         anchors.left: resultListInstance.right
                         width: 1
-                        color: root.sep
+                        color: root.border
                     }
 
                     Omni.PreviewPane {
