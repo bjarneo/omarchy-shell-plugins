@@ -115,7 +115,7 @@ Top-right now-playing card for `cliamp`, loaded inside `omarchy-shell`.
 Features:
 
 - Appears when cliamp starts or changes songs, then hides itself after a few seconds
-- Previous, play/pause, next, and click-to-seek controls
+- Title and artist display with click-to-seek progress
 - Winamp-style spectrum visualizer powered by `cliamp visstream`
 - Uses Omarchy shell shared colors and fonts through `qs.Commons`
 

@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "author": "bjarneo",
   "license": "MIT",
-  "description": "Persistent Omarchy shell now-playing card for cliamp with MPRIS controls and a spectrum visualizer.",
+  "description": "Persistent Omarchy shell now-playing card for cliamp with a spectrum visualizer.",
   "kinds": ["overlay"],
   "activation": "persistent",
   "keepLoaded": true,

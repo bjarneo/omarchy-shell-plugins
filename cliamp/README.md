@@ -17,9 +17,8 @@ omarchy-restart-shell
 
 Start `cliamp`. The card appears at the top right when cliamp starts or changes songs, then hides itself after a few seconds.
 
-## Controls
+## Interaction
 
-- Previous, play/pause, next buttons use cliamp's MPRIS controls.
 - Click the progress line to seek.
 - Press `Esc` or `Q` while the card has focus to hide it.
 - Show it again briefly with `omarchy-shell shell call cliamp refresh ""`.

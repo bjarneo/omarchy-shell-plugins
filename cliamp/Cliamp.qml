@@ -109,8 +109,8 @@ Item {
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-            implicitWidth: 360
-            implicitHeight: 96
+            implicitWidth: 380
+            implicitHeight: 118
             color: "transparent"
             visible: root.opened
 

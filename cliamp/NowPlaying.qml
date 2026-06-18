@@ -11,12 +11,14 @@ Item {
     signal dismissRequested()
 
     readonly property color bg: Color.popups.background
-    readonly property color edge: Color.popups.border
     readonly property color fg: Color.popups.text
     readonly property color dim: Color.muted
-    readonly property color accent: Color.accent
+    readonly property color accent: Color.foreground
+    readonly property color edge: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.42)
+    readonly property color softEdge: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12)
+    readonly property color surface: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.045)
     readonly property color green: Color.muted
-    readonly property color yellow: Color.accent
+    readonly property color yellow: Color.foreground
     readonly property color red: Color.urgent
     readonly property int cardRadius: Math.max(0, Style.cornerRadius)
 
@@ -47,14 +49,6 @@ Item {
         function onPositionChanged() { root.livePosition = root.player.position; }
     }
 
-    function fmt(seconds) {
-        if (!isFinite(seconds) || seconds < 0) return "--:--";
-        const s = Math.floor(seconds);
-        const m = Math.floor(s / 60);
-        const r = s % 60;
-        return m + ":" + (r < 10 ? "0" : "") + r;
-    }
-
     BandStream {
         id: stream
         fps: 30
@@ -71,20 +65,20 @@ Item {
 
     Rectangle {
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.bottom: parent.bottom
-        height: 1
+        width: 2
         color: root.accent
-        opacity: 0.75
+        opacity: 0.72
     }
 
     Item {
         id: inner
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
+        anchors.leftMargin: 14
+        anchors.rightMargin: 14
         anchors.topMargin: 10
-        anchors.bottomMargin: 8
+        anchors.bottomMargin: 9
 
         Text {
             id: sourceT
@@ -92,26 +86,13 @@ Item {
             anchors.left: parent.left
             height: 12
             verticalAlignment: Text.AlignVCenter
-            text: "CLIAMP"
-            color: root.accent
-            font.family: Style.font.family
-            font.pixelSize: Style.font.caption
-            font.letterSpacing: 1.6
-            font.bold: true
-            opacity: 0.9
-        }
-
-        Text {
-            id: timeT
-            anchors.top: parent.top
-            anchors.right: parent.right
-            height: 12
-            verticalAlignment: Text.AlignVCenter
-            text: root.fmt(root.livePosition) + " / " + root.fmt(root.len)
+            text: "NOW PLAYING"
             color: root.dim
             font.family: Style.font.family
             font.pixelSize: Style.font.caption
-            opacity: 0.85
+            font.letterSpacing: 1.2
+            font.bold: true
+            opacity: 0.78
         }
 
         Text {
@@ -119,56 +100,16 @@ Item {
             anchors.top: sourceT.bottom
             anchors.topMargin: 5
             anchors.left: parent.left
-            anchors.right: transport.left
-            anchors.rightMargin: 12
-            height: 18
+            anchors.right: parent.right
+            height: 22
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: root.ready ? (root.player.trackTitle || "Unknown title") : "cliamp: not running"
             color: root.fg
             font.family: Style.font.family
-            font.pixelSize: Style.font.title
+            font.pixelSize: Style.font.heading
             font.bold: true
             textFormat: Text.PlainText
-        }
-
-        Row {
-            id: transport
-            anchors.verticalCenter: titleT.verticalCenter
-            anchors.right: parent.right
-            width: 72
-            height: 20
-            spacing: 6
-
-            TransportButton {
-                width: 18; height: 20
-                shape: "prev"
-                iconSize: 10.5
-                enabled: root.ready && root.player.canGoPrevious
-                fgColor: root.dim
-                hoverColor: root.yellow
-                onActivated: root.player.previous()
-            }
-
-            TransportButton {
-                width: 24; height: 20
-                shape: root.playing ? "pause" : "play"
-                iconSize: 13
-                enabled: root.ready && root.player.canTogglePlaying
-                fgColor: root.accent
-                hoverColor: root.green
-                onActivated: root.player.togglePlaying()
-            }
-
-            TransportButton {
-                width: 18; height: 20
-                shape: "next"
-                iconSize: 10.5
-                enabled: root.ready && root.player.canGoNext
-                fgColor: root.dim
-                hoverColor: root.yellow
-                onActivated: root.player.next()
-            }
         }
 
         Text {
@@ -177,7 +118,7 @@ Item {
             anchors.topMargin: 1
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 15
+            height: 16
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
             text: root.ready ? (root.player.trackArtist || "") : ""
@@ -188,13 +129,23 @@ Item {
             opacity: 0.88
         }
 
-        Visualizer {
-            id: vis
+        Rectangle {
+            id: visBack
             anchors.top: artistT.bottom
             anchors.topMargin: 7
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 18
+            height: 26
+            radius: Math.max(0, root.cardRadius - 2)
+            color: root.surface
+            border.color: root.softEdge
+            border.width: 1
+        }
+
+        Visualizer {
+            id: vis
+            anchors.fill: visBack
+            anchors.margins: 3
             bands: stream.bands
             barColor: root.green
             accentColor: root.yellow
@@ -205,8 +156,8 @@ Item {
 
         Item {
             id: barWrap
-            anchors.top: vis.bottom
-            anchors.topMargin: 6
+            anchors.top: visBack.bottom
+            anchors.topMargin: 4
             anchors.left: parent.left
             anchors.right: parent.right
             height: 6
@@ -216,7 +167,7 @@ Item {
                 width: parent.width
                 height: 1
                 color: root.dim
-                opacity: 0.32
+                opacity: 0.28
                 radius: 0
             }
 
