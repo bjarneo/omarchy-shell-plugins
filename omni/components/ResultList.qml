@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Effects
+import Quickshell.Widgets
 
 // Vertical result list. Row delegate handles icon resolution (image
 // fallback to glyph), title with drill-in chevron, favourite star, and
@@ -52,10 +52,10 @@ Item {
                 visible: row.isSelected
             }
 
-            // Icon slot: tinted .desktop image when one resolves,
-            // nerd-font glyph fallback otherwise. hasImageIcon flips
-            // on Image.Ready so the swap happens in one frame, no
-            // broken-icon flash.
+            // Icon slot: themed .desktop icon when one resolves,
+            // nerd-font glyph fallback otherwise. IconImage mirrors
+            // Omarchy's launcher and handles icon-theme sources better
+            // than a plain Image.
             Item {
                 id: iconText
                 anchors.left: parent.left
@@ -65,7 +65,7 @@ Item {
                 height: 22
 
                 readonly property string iconUrl: rl.omni.resolveIconUrl(row.modelData.rawIcon)
-                readonly property bool hasImageIcon: appImg.status === Image.Ready && iconUrl !== ""
+                readonly property bool hasImageIcon: appIcon.status === Image.Ready && iconUrl !== ""
                 readonly property color tint: row.isSelected ? rl.omni.seal : rl.omni.inkDeep
 
                 Text {
@@ -77,34 +77,16 @@ Item {
                     font.pixelSize: 16 * rl.omni.fontScale
                 }
 
-                // Hidden because MultiEffect draws the recoloured copy;
-                // layer.enabled hands it a texture to sample without
-                // committing a full FBO until an icon actually resolves.
-                Image {
-                    id: appImg
+                IconImage {
+                    id: appIcon
                     anchors.centerIn: parent
+                    implicitSize: 18
                     width: 18
                     height: 18
-                    visible: false
                     source: iconText.iconUrl
-                    sourceSize.width: 36
-                    sourceSize.height: 36
-                    fillMode: Image.PreserveAspectFit
                     smooth: true
                     asynchronous: true
-                    cache: true
-                    layer.enabled: iconText.hasImageIcon
-                }
-                // colorization: 1.0 paints solid colour through the
-                // source's alpha - a flat tinted silhouette in the
-                // ink/seal palette.
-                MultiEffect {
-                    anchors.fill: appImg
-                    visible: iconText.hasImageIcon
-                    source: appImg
-                    colorization: 1.0
-                    colorizationColor: iconText.tint
-                    Behavior on colorizationColor { ColorAnimation { duration: 40 } }
+                    mipmap: true
                 }
             }
             Text {
