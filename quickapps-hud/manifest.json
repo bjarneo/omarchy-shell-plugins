@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "quickapps-hud",
+  "name": "QuickApps HUD",
+  "version": "0.1.0",
+  "author": "bjarneo",
+  "license": "MIT",
+  "description": "A fast Iron Man-style Omarchy shell quick-app launcher overlay.",
+  "kinds": ["overlay"],
+  "activation": "on-demand",
+  "keepLoaded": false,
+  "entryPoints": {
+    "overlay": "QuickAppsHud.qml"
+  }
+}

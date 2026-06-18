@@ -1,27 +1,30 @@
 # QuickApps HUD
 
-Iron Man-style quick-app launcher for Quickshell and Omarchy.
+Fast Iron Man-style quick-app launcher overlay for `omarchy-shell`.
 
 ## Quick Start
 
 Install from this checkout:
 
 ```bash
-mkdir -p ~/.config/quickshell
-rm -rf ~/.config/quickshell/quickapps-hud
-cp -a quickapps-hud ~/.config/quickshell/quickapps-hud
+mkdir -p ~/.config/omarchy/plugins
+rm -rf ~/.config/omarchy/plugins/quickapps-hud
+cp -a quickapps-hud ~/.config/omarchy/plugins/quickapps-hud
+omarchy plugin validate ~/.config/omarchy/plugins/quickapps-hud
+omarchy plugin enable quickapps-hud
+omarchy-restart-shell
 ```
 
 Launch it:
 
 ```bash
-qs -n -c quickapps-hud
+omarchy-shell shell toggle quickapps-hud '{}'
 ```
 
 Suggested Hyprland binding for `~/.config/hypr/bindings.lua`:
 
 ```lua
-hl.bind("SUPER + A", hl.dsp.exec_cmd("qs -n -c quickapps-hud"), { description = "QuickApps HUD" })
+hl.bind("SUPER + A", hl.dsp.exec_cmd([[omarchy-shell shell toggle quickapps-hud '{}']]), { description = "QuickApps HUD" })
 ```
 
 ## Configure Apps
@@ -57,11 +60,20 @@ Fallback order:
 | Enter / Space | Launch selected app |
 | Esc / Q | Dismiss |
 
+## Performance
+
+- Runs as an on-demand Omarchy overlay plugin, not a separate Quickshell process.
+- Unloads when hidden because `keepLoaded` is `false`.
+- Uses `qs.Commons` colors directly, so it does not poll the theme or spawn theme commands.
+- Full-screen Canvas layers are static and repaint only on resize or theme change.
+- Motion uses transform/opacity animations while the overlay is open.
+
 ## Files
 
 ```text
 quickapps-hud/
-  shell.qml
+  manifest.json
+  QuickAppsHud.qml
   quickapps.example.json
   README.md
 ```
