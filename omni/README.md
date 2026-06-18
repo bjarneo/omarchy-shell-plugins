@@ -2,7 +2,7 @@
 
 Standalone Omarchy shell command palette.
 
-Omni searches installed apps, Omarchy actions, files, themes, processes, GitHub repositories, `tldr` pages, and local Ollama prompts from one overlay.
+Omni searches installed apps, Omarchy actions, files, themes, processes, GitHub repositories and pull requests, `tldr` pages, and local Ollama prompts from one overlay.
 
 ## Install
 
@@ -81,7 +81,7 @@ The standalone plugin treats `Quick` as a normal command category. The rich tile
 ## Optional Tools
 
 - `fd` for file search.
-- `gh` for GitHub search.
+- `gh` for GitHub repo search and PR title/description previews.
 - `tldr` for inline command docs.
 - `ollama` with `qwen3.5:0.8b` for local chat and command generation.
 

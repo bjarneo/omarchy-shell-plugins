@@ -142,8 +142,30 @@ Item {
             icon: "󰓂",
             path: pr.url,
             exec: Data.openUrl(pr.url),
-            rawCategory: true
+            rawCategory: true,
+            isPr: true,
+            prRepo: repo,
+            prNumber: pr.number,
+            prBody: pr.body || "",
+            prAuthor: pr.author && pr.author.login ? pr.author.login : "",
+            prUpdatedAt: pr.updatedAt || ""
         };
+    }
+
+    function prPreview(item) {
+        const lines = [];
+        const repoLine = (item.prRepo || "") + (item.prNumber ? "#" + item.prNumber : "");
+        if (repoLine !== "") lines.push(repoLine);
+        if (item.prAuthor) lines.push("author: " + item.prAuthor);
+        if (item.prUpdatedAt) lines.push("updated: " + item.prUpdatedAt);
+        if (item.path) lines.push(item.path);
+        lines.push("");
+        lines.push("TITLE");
+        lines.push(item.title || "Untitled PR");
+        lines.push("");
+        lines.push("DESCRIPTION");
+        lines.push((item.prBody || "").trim() || "No description provided.");
+        return lines.join("\n");
     }
 
     function updatePreview() {
@@ -155,6 +177,10 @@ Item {
         ghSearch.previewRepo = (it && it.title) || "";
         ghSearch.previewReadme = "";
         if (!url || !it.title) return;
+        if (it.isPr) {
+            ghSearch.previewReadme = ghSearch.prPreview(it);
+            return;
+        }
         ghSearch.previewReadme = "Loading…";
         // gh api prints its 404 error body to stdout, so a naive pipe
         // would leak `{"message":"Not Found"...}` into the preview.
@@ -169,7 +195,7 @@ Item {
 
     function fetchPRs() {
         if (!ghSearch.ready) return;
-        const fields = "title,url,number,repository,createdAt";
+        const fields = "title,url,number,repository,body,author,updatedAt";
         prAuthorProc.command   = ["gh", "search", "prs", "--author=@me",           "--state=open", "--json", fields, "--limit", "25"];
         prReviewedProc.command = ["gh", "search", "prs", "--review-requested=@me", "--state=open", "--json", fields, "--limit", "15"];
         prMentionsProc.command = ["gh", "search", "prs", "--mentions=@me",         "--state=open", "--json", fields, "--limit", "15"];

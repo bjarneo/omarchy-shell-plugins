@@ -128,7 +128,7 @@ Item {
                                          : "PRESS ENTER TO ASK";
                     return o.chatRunning ? "STREAMING…" : "DONE";
                 }
-                if (o.ghMode)    return "SELECT A REPO";
+                if (o.ghMode)    return "SELECT A REPO OR PR";
                 if (o.procMode)  return "SELECT A PROCESS";
                 if (o.themeMode) return "SELECT A THEME";
                 return o.query.length === 0 ? "PREVIEW APPEARS HERE" : "SELECT A FILE";
