@@ -100,6 +100,12 @@ Launch it:
 omarchy-shell shell toggle quickapps-hud '{}'
 ```
 
+Override the HUD apps by creating `~/.config/omarchy-quickapps-hud/apps.json`, then refresh the open overlay:
+
+```bash
+omarchy-shell shell call quickapps-hud refresh ""
+```
+
 See `quickapps-hud/README.md` for details.
 
 ## Validate

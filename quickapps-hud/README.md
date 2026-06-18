@@ -41,6 +41,21 @@ Create `~/.config/omarchy-quickapps-hud/apps.json`:
 }
 ```
 
+Fields:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `name` | yes | Short label shown in the HUD |
+| `exec` | yes | Command to launch |
+| `icon` | no | Icon theme name or absolute path |
+| `comment` | no | Secondary text in the center readout |
+
+After editing, reopen the HUD or refresh the open overlay:
+
+```bash
+omarchy-shell shell call quickapps-hud refresh ""
+```
+
 Fallback order:
 
 - `~/.config/omarchy-quickapps-hud/apps.json`
