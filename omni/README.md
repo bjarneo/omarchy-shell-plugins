@@ -34,6 +34,22 @@ hl.unbind("ALT + SPACE")
 hl.bind("ALT + SPACE", hl.dsp.exec_cmd([[omarchy-shell shell toggle omni '{}']]), { description = "Omni" })
 ```
 
+## Instant Open
+
+Hyprland can animate layer-shell overlays even when Omni has no QML open or close transition. Add this rule to `~/.config/hypr/hyprland.lua` so the `omarchy-omni` surface skips compositor fade and scale animation:
+
+```lua
+hl.layer_rule({ match = { namespace = "omarchy-omni" }, no_anim = true, animation = "none" })
+```
+
+Reload Hyprland and restart the shell:
+
+```bash
+hyprctl reload
+hyprctl configerrors
+omarchy-restart-shell
+```
+
 ## Usage
 
 Toggle it through the shell plugin target:
