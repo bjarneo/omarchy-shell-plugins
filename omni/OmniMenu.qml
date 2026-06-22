@@ -701,7 +701,7 @@ Item {
     // ---------- Panel ----------
     PanelWindow {
         id: panel
-        visible: root.visible_ || reveal > 0.001
+        visible: root.visible_
         color: "transparent"
         anchors { top: true; bottom: true; left: true; right: true }
         exclusionMode: ExclusionMode.Ignore
@@ -709,18 +709,12 @@ Item {
         WlrLayershell.namespace: "omarchy-omni"
         WlrLayershell.keyboardFocus: root.visible_ ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-        property real reveal: root.visible_ ? 1 : 0
-        // Open and close are both instant: SUPER+SPACE paints the palette on
-        // the very next frame, and dismissal drops it the same frame with no
-        // fade or scale-out lag.
-
-        // Backdrop dim — fades the desktop behind the palette along the
-        // same reveal curve as the card scale, so open/close stays one
-        // motion. Drawn before the dismiss MouseArea so clicks still
-        // reach the close handler.
+        // Drawn before the dismiss MouseArea so clicks still reach the close
+        // handler. This is intentionally static: opening and closing Omni must
+        // not wait on a fade, reveal, or scale transition.
         Rectangle {
             anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.5 * panel.reveal)
+            color: Qt.rgba(0, 0, 0, 0.5)
         }
 
         // Outside-click dismiss.
@@ -754,8 +748,6 @@ Item {
             border.color: root.border
             border.width: 1
             radius: root.cornerRadius
-            transformOrigin: Item.Center
-            scale: panel.reveal
 
             // Swallow clicks so the underlying dismiss MouseArea doesn't fire.
             MouseArea { anchors.fill: parent }
