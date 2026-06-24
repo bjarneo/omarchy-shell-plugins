@@ -7,7 +7,6 @@ Item {
 
     required property var omni
     property var themes:    null
-    property var bookmarks: null
 
     width: parent ? parent.width : 0
     // Track the title's actual rendered height so user-driven font

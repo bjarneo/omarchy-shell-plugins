@@ -1,15 +1,13 @@
 import QtQuick
 
 // Search row: magnifier glyph, current query (or mode-specific
-// placeholder), and a blinking caret. Hidden entirely in quickMode -
-// the tile grid is its own input surface.
+// placeholder), and a blinking caret.
 Item {
     id: input
     required property var omni
 
-    visible: !omni.quickMode
     width: parent ? parent.width : 0
-    height: visible ? 34 : 0
+    height: 34
 
     Text {
         id: searchPrompt
@@ -28,6 +26,8 @@ Item {
         id: queryText
         anchors.left: searchPrompt.right
         anchors.leftMargin: 10
+        anchors.right: parent.right
+        anchors.rightMargin: 14
         anchors.verticalCenter: parent.verticalCenter
         text: {
             const o = input.omni;
@@ -42,6 +42,8 @@ Item {
         font.family: input.omni.mono
         font.pixelSize: 14 * input.omni.fontScale
         font.letterSpacing: 1
+        elide: Text.ElideRight
+        clip: true
     }
 
     // Blinking caret riding the end of the query.
@@ -53,7 +55,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         x: input.omni.query.length === 0
            ? searchPrompt.x + searchPrompt.width + 10
-           : queryText.x + queryText.contentWidth + 2
+           : Math.min(queryText.x + queryText.contentWidth + 2,
+                      input.width - caret.width)
         visible: input.omni.visible_
         SequentialAnimation on opacity {
             running: input.omni.visible_

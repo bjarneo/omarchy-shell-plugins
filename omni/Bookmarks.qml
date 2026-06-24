@@ -35,7 +35,9 @@ Item {
             path: item.path || "",
             keywords: item.keywords || "",
             rawCategory: !!item.rawCategory,
-            tui: item.tui || ""
+            tui: item.tui || "",
+            isTheme: !!item.isTheme,
+            themeName: item.themeName || ""
         };
     }
 

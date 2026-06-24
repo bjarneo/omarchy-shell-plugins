@@ -53,6 +53,7 @@ Item {
     // and surprise the user. Set in submit(), cleared after the unload
     // fires from clear().
     property bool _usedThisSession: false
+    property string _streamBuffer: ""
 
     // Emitted from submit() so callers can scroll to top / reset
     // state on each *new* submission specifically — not on every
@@ -92,9 +93,11 @@ Item {
     function clear() {
         ollamaChat.items = [];
         ollamaChat.previewText = "";
+        ollamaChat._streamBuffer = "";
         ollamaChat.prompt = "";
         ollamaChat.submitted = false;
         ollamaChat._gen += 1;
+        streamFlush.stop();
         chatProc.running = false;
         probeProc.running = false;
         ollamaChat.status = "";
@@ -153,6 +156,8 @@ Item {
         ollamaChat.submitted = true;
         ollamaChat._usedThisSession = true;
         ollamaChat.previewText = "";
+        ollamaChat._streamBuffer = "";
+        streamFlush.stop();
         ollamaChat._gen += 1;
         chatProc.gen = ollamaChat._gen;
         // argv-style — the prompt rides inside JSON.stringify'd body so
@@ -179,6 +184,12 @@ Item {
         ollamaChat.promptSubmitted();
     }
 
+    function flushStream() {
+        if (ollamaChat._streamBuffer.length === 0) return;
+        ollamaChat.previewText += ollamaChat._streamBuffer;
+        ollamaChat._streamBuffer = "";
+    }
+
     onActiveChanged: {
         if (ollamaChat.active) {
             // Re-probe on every entry: install / pull / daemon-start
@@ -197,6 +208,8 @@ Item {
             // where they re-type `?` with the same content — clear()
             // is called from close()/category-pivot, not here.
             ollamaChat._gen += 1;
+            ollamaChat._streamBuffer = "";
+            streamFlush.stop();
             chatProc.running = false;
         }
     }
@@ -209,6 +222,8 @@ Item {
             ollamaChat.prompt = next;
             ollamaChat.submitted = false;
             ollamaChat.previewText = "";
+            ollamaChat._streamBuffer = "";
+            streamFlush.stop();
             // Editing the prompt invalidates any in-flight stream.
             ollamaChat._gen += 1;
             chatProc.running = false;
@@ -224,6 +239,8 @@ Item {
         if (!ollamaChat.active) return;
         ollamaChat.submitted = false;
         ollamaChat.previewText = "";
+        ollamaChat._streamBuffer = "";
+        streamFlush.stop();
         ollamaChat._gen += 1;
         chatProc.running = false;
         const parsed = ollamaChat.parseQuery(ollamaChat.query);
@@ -265,6 +282,13 @@ Item {
         command: ["true"]
     }
 
+    Timer {
+        id: streamFlush
+        interval: 80
+        repeat: false
+        onTriggered: ollamaChat.flushStream()
+    }
+
     // Streaming inference via Ollama's HTTP API. SplitParser fires on
     // each NDJSON line; we accumulate `response` fields into
     // previewText. Generation token drops stale chunks from a prior
@@ -282,7 +306,8 @@ Item {
                 try {
                     const obj = JSON.parse(data);
                     if (typeof obj.response === "string" && obj.response.length > 0) {
-                        ollamaChat.previewText += obj.response;
+                        ollamaChat._streamBuffer += obj.response;
+                        if (!streamFlush.running) streamFlush.start();
                     }
                 } catch (e) {
                     // Non-JSON chunk (rare — curl status messages, empty
@@ -290,6 +315,7 @@ Item {
                 }
             }
         }
+        onExited: ollamaChat.flushStream()
     }
 
 }

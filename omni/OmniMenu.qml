@@ -19,7 +19,6 @@ import "components" as Omni
 //   components/SearchInput.qml     prompt glyph + query text + caret
 //   components/ResultList.qml      ListView + row delegate
 //   components/PreviewPane.qml     preview header + body for all modes
-//   components/Footer.qml          exec line for the selected item
 //   components/Format.js           markdown formatters (tldr, chat)
 Item {
     id: root
@@ -95,10 +94,6 @@ Item {
     readonly property bool favMode:  root.categoryFilter === Data.favCategory
     readonly property bool histMode: root.categoryFilter === Data.histCategory
     readonly property bool themeMode: root.categoryFilter === Data.themeCategory
-    // In the standalone plugin, Quick is a normal command category. The rich
-    // live-tile grid belongs to the personal desktop config because it depends
-    // on that bar's telemetry object.
-    readonly property bool quickMode: false
     // Query-shape modes. Each triggers off the query string directly,
     // so the user can pivot in from any drill without going back to
     // root.
@@ -124,48 +119,7 @@ Item {
         // floating-point round-off.
         root.fontScale = Math.round(next * 10) / 10;
     }
-    // null = no expansion; otherwise the tile object whose detail panel
-    // is currently revealed under the grid.
-    property var expandedTile: null
-    // Single source of truth for "in Quick mode with a tile open" — the
-    // grid column count, the compressed-tile flag, and the side-panel
-    // visibility all key off it.
-    readonly property bool quickExpanded: quickMode && expandedTile !== null
-    readonly property int  quickGridCols: quickExpanded ? 1 : 4
-    function expandTile(t) {
-        if (!t) { root.expandedTile = null; return; }
-        // Click same tile to collapse; click a different tile to swap.
-        root.expandedTile = (root.expandedTile && root.expandedTile.key === t.key)
-                            ? null : t;
-    }
-    function collapseTile() { root.expandedTile = null; }
-
     Bookmarks { id: bookmarks }
-
-    // ---------- Quick tile compatibility stubs ----------
-    // The upstream desktop version uses these for its telemetry grid. Keep
-    // inert versions so the key handler/state machine can stay shared.
-    readonly property var quickTilesBase: []
-    property var _quickTilesDynCache: ({})
-    readonly property var quickTilesDyn: ({})
-
-    // Resolve the dynamic side of a base tile. Returns an empty object
-    // (not undefined) so delegate bindings can chain `.glyph` / `.sub`
-    // without an `?.` chain on every read.
-    function tileDyn(t) { return (t && root.quickTilesDyn[t.key]) || ({}); }
-
-    // No search field in quickMode — tiles are always the full set so
-    // grid arithmetic (gridCols * row) stays predictable. Kept as a
-    // separate property so non-quick code paths don't need to branch.
-    readonly property var filteredQuickTiles: []
-
-    // Same launch envelope as activate() so popup IPCs (qs ipc call …)
-    // get fired off-process and quickshell can close immediately.
-    function activateQuickTile(t) {}
-
-    // Long-press / right-click hook. Stays open so a "refresh weather"
-    // or "reset display" doesn't dismiss the panel mid-glance.
-    function longQuickTile(t) {}
 
     // GitHub CLI-backed repo search and pull-request preview.
     GitHubSearch {
@@ -372,10 +326,11 @@ Item {
         }
         // Theme apply — fire and forget; omarchy-theme-set rebuilds
         // configs and reloads all the live apps that listen for it.
-        if (item.isTheme) {
+        const themeName = item.themeName || (((item.category === "THEME" || item.category === "ACTIVE") && !item.exec) ? item.title : "");
+        if (item.isTheme || themeName !== "") {
             runner.command = ["sh", "-c",
                 "setsid -f uwsm-app -- omarchy-theme-set \"$1\" >/dev/null 2>&1",
-                "sh", item.themeName];
+                "sh", themeName];
             runner.running = false;
             runner.running = true;
             root.dismiss();
@@ -650,16 +605,6 @@ Item {
         resultListInstance.list.positionViewAtIndex(next, ListView.Contain);
     }
 
-    // Grid-aware step for Quick mode. `delta` may exceed ±1 (arrow Up/Down
-    // moves by gridCols). Clamps rather than wraps so Up from the top row
-    // doesn't jump to the last row of a partial bottom row.
-    function moveQuickSelection(delta) {
-        const n = root.filteredQuickTiles.length;
-        if (n === 0) return;
-        const next = Math.max(0, Math.min(n - 1, root.selectedIndex + delta));
-        root.selectedIndex = next;
-    }
-
     Component.onCompleted: {
         root.omarchy = omarchyMenu.items;
         root.nav     = Data.annotate(Data.categoryNav);
@@ -712,21 +657,14 @@ Item {
             // Card sits slightly above visual centre so the result list grows
             // downward without dragging the search field out of the eyeline.
             y: parent.height * 0.18
-            // Wide in any preview-bearing mode (file, GitHub, themes) so a
-            // ~520px preview pane fits next to the result
-            // list; narrow 640 elsewhere — including Quick mode whether
-            // collapsed or expanded — so opening a tile doesn't cause any
-            // horizontal jump. The tile column compresses to 64px on the
-            // left of the same 640 card, leaving ~509px for the detail
-            // panel.
-            width: root.previewActive ? 1000 : 640
+            // Wide in preview-bearing modes so a ~520px preview pane fits
+            // next to the result list, but clamp to the current output.
+            width: Math.min(root.previewActive ? 1000 : 640,
+                            Math.max(320, parent.width - 34))
             Behavior on width {
                 NumberAnimation { duration: 60; easing.type: Easing.OutCubic }
             }
-            // Cap the card so it never exceeds the screen even on small
-            // displays; cardCol implicitHeight covers the search + list +
-            // footer block.
-            height: Math.min(cardCol.implicitHeight + 34, parent.height * 0.72)
+            height: Math.min(620, parent.height * 0.72)
             color: root.background
             border.color: root.border
             border.width: 1
@@ -737,73 +675,16 @@ Item {
 
             focus: root.visible_
             Keys.onPressed: function(event) {
-                // hjkl → arrow translation (Vim-style nav). Only active
-                // in quickMode, where there is no typing buffer and the
-                // tile grid is the sole input surface. In the main omni
-                // search h/j/k/l are letters first; remapping them — even
-                // conditionally on empty query — surprised users who
-                // expected to start typing immediately.
-                const _hjklMap = {};
-                _hjklMap[Qt.Key_H] = Qt.Key_Left;
-                _hjklMap[Qt.Key_J] = Qt.Key_Down;
-                _hjklMap[Qt.Key_K] = Qt.Key_Up;
-                _hjklMap[Qt.Key_L] = Qt.Key_Right;
-                const _wrap = (e) => {
-                    if (_hjklMap[e.key] === undefined) return e;
-                    if (!root.quickMode) return e;
-                    return { key: _hjklMap[e.key], modifiers: e.modifiers, text: e.text };
-                };
-                const e2 = _wrap(event);
-
-                // When a quick tile is expanded, give its body first crack
-                // at the key so arrow/Tab/Enter drive the body's own focus
-                // chain (volume slider, wi-fi list, bluetooth list, …)
-                // instead of the tile grid. Bodies return true from
-                // kbdHandle() to swallow the event; anything they leave
-                // unhandled (e.g. Esc) bubbles to the cascade below.
-                const bodyItem = null;
-                if (root.quickExpanded
-                    && bodyItem
-                    && typeof bodyItem.kbdHandle === "function"
-                    && bodyItem.kbdHandle(e2)) {
-                    event.accepted = true;
-                    return;
-                }
+                const e2 = event;
                 if (e2.key === Qt.Key_Escape) {
-                    // Esc cascade: collapse the quick-tile detail panel
-                    // first (if open), then clear the typed query, then
-                    // unwind drill-down, then close. Each Esc undoes
-                    // exactly one layer of state so the palette never
-                    // exits with a half-typed query on screen.
-                    if (root.quickExpanded) {
-                        root.expandedTile = null;
-                    } else if (root.query.length > 0) {
+                    // Esc clears the typed query, then unwinds drill-down,
+                    // then closes. Each Esc undoes exactly one layer of state.
+                    if (root.query.length > 0) {
                         root.query = "";
                         root.selectedIndex = 0;
                     } else if (!root.goUp()) {
                         root.dismiss();
                     }
-                    event.accepted = true;
-                } else if (root.quickMode && e2.key === Qt.Key_Left) {
-                    root.moveQuickSelection(-1);
-                    event.accepted = true;
-                } else if (root.quickMode && e2.key === Qt.Key_Right) {
-                    root.moveQuickSelection(1);
-                    event.accepted = true;
-                } else if (root.quickMode && e2.key === Qt.Key_Up) {
-                    root.moveQuickSelection(-root.quickGridCols);
-                    event.accepted = true;
-                } else if (root.quickMode && e2.key === Qt.Key_Down) {
-                    root.moveQuickSelection(root.quickGridCols);
-                    event.accepted = true;
-                } else if (root.quickMode
-                           && (e2.key === Qt.Key_Tab && !(e2.modifiers & Qt.ShiftModifier))) {
-                    root.moveQuickSelection(1);
-                    event.accepted = true;
-                } else if (root.quickMode
-                           && (e2.key === Qt.Key_Backtab
-                               || (e2.key === Qt.Key_Tab && (e2.modifiers & Qt.ShiftModifier)))) {
-                    root.moveQuickSelection(-1);
                     event.accepted = true;
                 } else if (root.llmMode && root.previewHasContent
                            && (e2.key === Qt.Key_Up || e2.key === Qt.Key_Down
@@ -881,13 +762,8 @@ Item {
                     resultListInstance.list.positionViewAtIndex(root.selectedIndex, ListView.End);
                     event.accepted = true;
                 } else if (e2.key === Qt.Key_Return || e2.key === Qt.Key_Enter) {
-                    if (root.quickMode) {
-                        const t = root.filteredQuickTiles[root.selectedIndex];
-                        if (t) root.expandTile(t);
-                    } else {
-                        const it = root.filteredItems[root.selectedIndex];
-                        if (it) root.activate(it);
-                    }
+                    const it = root.filteredItems[root.selectedIndex];
+                    if (it) root.activate(it);
                     event.accepted = true;
                 } else if (e2.key === Qt.Key_Backspace) {
                     // Backspace deletes a char first; once the query is
@@ -941,11 +817,10 @@ Item {
                         previewPaneInstance.tldrEdit.deselect();
                     }
                     event.accepted = true;
-                } else if (!root.quickMode && event.text && event.text.length === 1) {
+                } else if (event.text && event.text.length === 1) {
                     const ch = event.text;
                     // Printable range; lets letters, digits, and spaces in,
-                    // keeps modifier-driven control codes out. Skipped in
-                    // quickMode — there's no search field to feed.
+                    // keeps modifier-driven control codes out.
                     if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) !== 127) {
                         root.query += ch;
                         root.selectedIndex = 0;
@@ -964,31 +839,22 @@ Item {
                     id: headerBar
                     omni: root
                     themes: themes
-                    bookmarks: bookmarks
                 }
 
                 Rectangle { width: parent.width; height: 1; color: root.border }
 
                 Omni.SearchInput { omni: root }
 
-                Rectangle {
-                    visible: !root.quickMode
-                    width: parent.width
-                    height: 1
-                    color: root.border
-                }
+                Rectangle { width: parent.width; height: 1; color: root.border }
 
                 // Fixed row height in the delegate keeps positionViewAtIndex
                 // honest under fast keyboard navigation; the wrapping Item's
-                // clip prevents the bottom row bleeding into the footer
+                // clip prevents the bottom row bleeding into the lower
                 // hairline mid-scroll.
                 Item {
                     id: listArea
-                    visible: !root.quickMode
                     width: parent.width
-                    height: visible
-                        ? Math.max(60, card.height - 34 - headerBar.height - 34 - 12 * 4)
-                        : 0
+                    height: Math.max(60, card.height - 34 - headerBar.height - 34 - 12 * 4)
                     clip: true
 
                     // In file mode the list shrinks to ~44% of the card so

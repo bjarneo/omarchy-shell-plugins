@@ -96,13 +96,13 @@ Item {
         anchors.right: parent.right
         height: 1
         color: pp.omni.border
-        visible: pp.omni.previewHasContent
+        opacity: pp.omni.previewHasContent ? 1 : 0
     }
 
     Item {
         id: previewBody
-        anchors.top: previewSep.bottom
-        anchors.topMargin: 10
+        anchors.top: pp.omni.previewHasContent ? previewSep.bottom : previewDir.bottom
+        anchors.topMargin: pp.omni.previewHasContent ? 10 : 12
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -140,9 +140,10 @@ Item {
         // sourceSize caps decode memory so a 6000x4000 photo doesn't
         // allocate its full pixel buffer just to render at ~500px.
         Image {
+            id: fileImagePreview
             anchors.fill: parent
             anchors.margins: 4
-            visible: pp.omni.previewKind === "image"
+            visible: pp.omni.previewKind === "image" && status === Image.Ready
             source: pp.omni.previewKind === "image"
                     ? "file://" + pp.omni.previewPath
                     : ""
@@ -151,6 +152,18 @@ Item {
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             smooth: true
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: pp.omni.previewKind === "image" && fileImagePreview.status !== Image.Ready
+            text: fileImagePreview.status === Image.Error ? "IMAGE PREVIEW FAILED" : "LOADING IMAGE"
+            color: pp.omni.mutedForeground
+            font.family: pp.omni.mono
+            font.pixelSize: 10 * pp.omni.fontScale
+            font.letterSpacing: 3
+            opacity: 0.6
+            textFormat: Text.PlainText
         }
 
         Text {

@@ -113,7 +113,10 @@ Item {
                 font.weight: row.isSelected ? Font.Medium : Font.Light
                 font.letterSpacing: 1
                 elide: Text.ElideRight
-                width: row.width - iconText.width - catText.implicitWidth - 60
+                textFormat: Text.PlainText
+                width: Math.max(40, row.width - iconText.width - catText.width
+                                - (starText.visible ? starText.implicitWidth + starText.anchors.rightMargin : 0)
+                                - 60)
             }
             Text {
                 id: starText
@@ -122,6 +125,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: rl.bookmarks.isFavourite(row.modelData)
                 text: "󰓎"
+                textFormat: Text.PlainText
                 color: rl.omni.selectedForeground
                 font.family: rl.omni.mono
                 font.pixelSize: 11 * rl.omni.fontScale
@@ -137,6 +141,7 @@ Item {
                 text: row.modelData.rawCategory
                       ? (row.modelData.category || "")
                       : (row.modelData.category || "").toUpperCase()
+                textFormat: Text.PlainText
                 color: row.isSelected ? rl.omni.selectedForeground : rl.omni.mutedForeground
                 opacity: row.isSelected ? 0.95 : 0.65
                 font.family: rl.omni.mono
