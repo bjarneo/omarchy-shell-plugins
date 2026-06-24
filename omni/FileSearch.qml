@@ -22,6 +22,10 @@ Item {
     property string previewText: ""
     property string previewMeta: ""
     readonly property bool running: fdProc.running
+                                    || textPreviewProc.running
+                                    || metaPreviewProc.running
+    property int _searchGen: 0
+    property int _previewGen: 0
 
     readonly property string previewKind: {
         if (!fileSearch.previewPath) return "";
@@ -32,11 +36,16 @@ Item {
     }
 
     function clear() {
+        fileSearch._searchGen += 1;
+        fileSearch._previewGen += 1;
+        fdDebounce.stop();
+        fdProc.running = false;
+        textPreviewProc.running = false;
+        metaPreviewProc.running = false;
         fileSearch.items = [];
         fileSearch.previewPath = "";
         fileSearch.previewText = "";
         fileSearch.previewMeta = "";
-        fdDebounce.stop();
     }
 
     function updatePreview() {
@@ -47,12 +56,17 @@ Item {
         fileSearch.previewPath = path;
         fileSearch.previewText = "";
         fileSearch.previewMeta = "";
+        fileSearch._previewGen += 1;
+        textPreviewProc.running = false;
+        metaPreviewProc.running = false;
         if (!path) return;
+        const gen = fileSearch._previewGen;
         const kind = fileSearch.previewKind;
         if (kind === "text") {
             fileSearch.previewText = "Loading…";
+            textPreviewProc.gen = gen;
+            textPreviewProc.path = path;
             textPreviewProc.command = ["head", "-c", "8192", path];
-            textPreviewProc.running = false;
             textPreviewProc.running = true;
         } else if (kind === "meta") {
             fileSearch.previewMeta = "Loading…";
@@ -62,7 +76,8 @@ Item {
                 "stat -c 'SIZE   %s bytes\nMTIME  %y' \"$1\" 2>/dev/null; "
                 + "printf 'MIME   '; file -b --mime-type \"$1\" 2>/dev/null",
                 "sh", path];
-            metaPreviewProc.running = false;
+            metaPreviewProc.gen = gen;
+            metaPreviewProc.path = path;
             metaPreviewProc.running = true;
         }
     }
@@ -99,13 +114,19 @@ Item {
 
     onQueryChanged: { if (fileSearch.active) fdDebounce.restart(); }
     onSelectedItemChanged: { if (fileSearch.active) fileSearch.updatePreview(); }
+    onActiveChanged: {
+        if (fileSearch.active) fdDebounce.restart();
+        else fileSearch.clear();
+    }
 
     Process {
         id: fdProc
+        property int gen: 0
         running: false
         command: ["fd"]
         stdout: StdioCollector {
             onStreamFinished: {
+                if (fdProc.gen !== fileSearch._searchGen || !fileSearch.active) return;
                 const lines = this.text.split("\n").filter(s => s.length > 0);
                 const out = new Array(lines.length);
                 const home = fileSearch.homeDir;
@@ -136,12 +157,16 @@ Item {
         onTriggered: {
             const tokens = fileSearch.queryTokens;
             if (!fileSearch.active || tokens.length === 0) {
+                fileSearch._searchGen += 1;
+                fdProc.running = false;
                 fileSearch.items = [];
                 fileSearch.updatePreview();
                 return;
             }
-            fdProc.command = ["fd"].concat(fileSearch.buildFdArgs(tokens));
+            fileSearch._searchGen += 1;
             fdProc.running = false;
+            fdProc.gen = fileSearch._searchGen;
+            fdProc.command = ["fd"].concat(fileSearch.buildFdArgs(tokens));
             fdProc.running = true;
         }
     }
@@ -151,18 +176,32 @@ Item {
     // false→true on selection change.
     Process {
         id: textPreviewProc
+        property int gen: 0
+        property string path: ""
         running: false
         command: ["true"]
         stdout: StdioCollector {
-            onStreamFinished: { fileSearch.previewText = this.text; }
+            onStreamFinished: {
+                if (textPreviewProc.gen !== fileSearch._previewGen
+                    || textPreviewProc.path !== fileSearch.previewPath
+                    || !fileSearch.active) return;
+                fileSearch.previewText = this.text;
+            }
         }
     }
     Process {
         id: metaPreviewProc
+        property int gen: 0
+        property string path: ""
         running: false
         command: ["true"]
         stdout: StdioCollector {
-            onStreamFinished: { fileSearch.previewMeta = this.text; }
+            onStreamFinished: {
+                if (metaPreviewProc.gen !== fileSearch._previewGen
+                    || metaPreviewProc.path !== fileSearch.previewPath
+                    || !fileSearch.active) return;
+                fileSearch.previewMeta = this.text;
+            }
         }
     }
 }

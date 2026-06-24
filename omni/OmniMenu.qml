@@ -270,11 +270,14 @@ Item {
         let payload = ({});
         try { payload = JSON.parse(payloadJson || "{}"); } catch (e) { payload = ({}); }
 
-        root.query = payload.query ? String(payload.query) : "";
+        const nextQuery = payload.query ? String(payload.query) : "";
+        const nextCategory = payload.category ? String(payload.category)
+                           : payload.categoryFilter ? String(payload.categoryFilter)
+                           : "";
+        root.query = "";
         root.selectedIndex = 0;
-        root.categoryFilter = payload.category ? String(payload.category)
-                            : payload.categoryFilter ? String(payload.categoryFilter)
-                            : "";
+        root.categoryFilter = nextCategory;
+        root.query = nextQuery;
         root.opened = true;
         root.visible_ = true;
         omarchyMenu.refreshGuards();
@@ -464,9 +467,8 @@ Item {
         // command name (omarchy-launch-tui or omarchy-launch-floating-…).
         const cmd = item.tui ? item.tui + " " + item.exec : item.exec;
         runner.command = ["sh", "-c",
-                          "setsid -f uwsm-app -- bash -c "
-                          + JSON.stringify(cmd)
-                          + " >/dev/null 2>&1"];
+                          "setsid -f uwsm-app -- bash -c \"$1\" >/dev/null 2>&1",
+                          "sh", cmd];
         runner.running = false;
         runner.running = true;
         root.dismiss();

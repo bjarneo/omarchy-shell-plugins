@@ -83,9 +83,9 @@ Item {
             return;
         }
 
+        guardProc.running = false;
         guardProc.revision = menuScan.guardRevision;
         guardProc.command = ["bash", "-lc", script];
-        guardProc.running = false;
         guardProc.running = true;
     }
 

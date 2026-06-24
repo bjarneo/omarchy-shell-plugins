@@ -108,6 +108,7 @@ Item {
             // tldrSearch._gen — a delayed result from a previous
             // dispatch will mismatch and be dropped.
             tldrSearch._gen += 1;
+            tldrProc.running = false;
             tldrProc.gen = tldrSearch._gen;
             // `-m` emits raw markdown so OmniMenu can style it against
             // the live palette. 2>&1 folds the "documentation is not
@@ -116,7 +117,6 @@ Item {
             tldrProc.command = ["sh", "-c",
                 "tldr -m -- \"$1\" 2>&1",
                 "sh", parsed.name];
-            tldrProc.running = false;
             tldrProc.running = true;
         }
     }

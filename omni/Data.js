@@ -291,8 +291,11 @@ function fileExt(path) {
 function fileIcon(path) {
     return fileIcons[fileExt(path)] || "";
 }
+function shellQuote(value) {
+    return "'" + String(value || "").replace(/'/g, "'\\''") + "'";
+}
 function openUrl(url) {
-    return "xdg-open " + JSON.stringify(url);
+    return "xdg-open " + shellQuote(url);
 }
 
 function stripJsonc(raw) {

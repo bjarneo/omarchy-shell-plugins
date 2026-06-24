@@ -9,9 +9,8 @@ import "Data.js" as Data
 //   query set   -> repo search (scoped: you + your orgs first,
 //                  broad: the world after), debounced.
 //
-// Identity (login + orgs) is probed once at startup so both surfaces
-// know who you are. Failures leave the owner filter empty and the
-// search falls back to broad-only.
+// Identity (login + orgs) is probed on first use so cold-open stays cheap.
+// Failures leave the owner filter empty and the search falls back to broad-only.
 Item {
     id: githubSearch
 
@@ -20,6 +19,7 @@ Item {
     required property var selectedItem
 
     property bool ready: false
+    property bool probed: false
     property string previewTitle: ""
     property string previewUrl: ""
     property string previewText: ""
@@ -29,6 +29,12 @@ Item {
                                     || reviewRequestedPullRequestsProc.running
                                     || mentionedPullRequestsProc.running
                                     || assignedPullRequestsProc.running
+                                    || repositoryReadmeProc.running
+                                    || githubAuthProc.running
+                                    || identityProc.running
+    property int _searchGen: 0
+    property int _previewGen: 0
+    property int _pullRequestGen: 0
 
     // Identity, learned once at startup.
     property string userLogin: ""
@@ -106,12 +112,41 @@ Item {
     }
 
     function clear() {
+        githubSearch._searchGen += 1;
+        githubSearch._previewGen += 1;
+        githubSearch._pullRequestGen += 1;
+        repositorySearchDebounce.stop();
+        ownedRepositorySearchProc.running = false;
+        globalRepositorySearchProc.running = false;
+        authoredPullRequestsProc.running = false;
+        reviewRequestedPullRequestsProc.running = false;
+        mentionedPullRequestsProc.running = false;
+        assignedPullRequestsProc.running = false;
+        repositoryReadmeProc.running = false;
+        identityProc.running = false;
+        if (!githubSearch.ready) {
+            githubAuthProc.running = false;
+            githubSearch.probed = false;
+        }
         githubSearch.ownedRepositoryResults = [];
         githubSearch.globalRepositoryResults = [];
         githubSearch.previewTitle = "";
         githubSearch.previewUrl = "";
         githubSearch.previewText = "";
-        repositorySearchDebounce.stop();
+    }
+
+    function ensureReady() {
+        if (githubSearch.ready) {
+            if (githubSearch.userLogin === "" && !identityProc.running) {
+                identityProc.running = false;
+                identityProc.running = true;
+            }
+            return;
+        }
+        if (githubSearch.probed || githubAuthProc.running) return;
+        githubSearch.probed = true;
+        githubAuthProc.running = false;
+        githubAuthProc.running = true;
     }
 
     function toRepositoryItem(repository) {
@@ -182,6 +217,9 @@ Item {
             return;
         }
         githubSearch.previewText = "Loading…";
+        githubSearch._previewGen += 1;
+        repositoryReadmeProc.gen = githubSearch._previewGen;
+        repositoryReadmeProc.url = url;
         // gh api prints its 404 error body to stdout, so a naive pipe
         // would leak `{"message":"Not Found"...}` into the preview.
         // Capture first, only emit on exit success. Works for both repo
@@ -195,24 +233,59 @@ Item {
 
     function fetchPullRequests() {
         if (!githubSearch.ready) return;
+        githubSearch._pullRequestGen += 1;
+        const gen = githubSearch._pullRequestGen;
         const fields = "title,url,number,repository,body,author,updatedAt";
         authoredPullRequestsProc.command = ["gh", "search", "prs", "--author=@me", "--state=open", "--json", fields, "--limit", "25"];
         reviewRequestedPullRequestsProc.command = ["gh", "search", "prs", "--review-requested=@me", "--state=open", "--json", fields, "--limit", "15"];
         mentionedPullRequestsProc.command = ["gh", "search", "prs", "--mentions=@me", "--state=open", "--json", fields, "--limit", "15"];
         assignedPullRequestsProc.command = ["gh", "search", "prs", "--assignee=@me", "--state=open", "--json", fields, "--limit", "15"];
+        authoredPullRequestsProc.gen = gen;
+        reviewRequestedPullRequestsProc.gen = gen;
+        mentionedPullRequestsProc.gen = gen;
+        assignedPullRequestsProc.gen = gen;
         authoredPullRequestsProc.running = false; authoredPullRequestsProc.running = true;
         reviewRequestedPullRequestsProc.running = false; reviewRequestedPullRequestsProc.running = true;
         mentionedPullRequestsProc.running = false; mentionedPullRequestsProc.running = true;
         assignedPullRequestsProc.running = false; assignedPullRequestsProc.running = true;
     }
 
-    onQueryChanged: { if (githubSearch.active) repositorySearchDebounce.restart(); }
+    onQueryChanged: {
+        if (!githubSearch.active) return;
+        githubSearch.ensureReady();
+        if (githubSearch.query.trim().length === 0) {
+            githubSearch._searchGen += 1;
+            ownedRepositorySearchProc.running = false;
+            globalRepositorySearchProc.running = false;
+            githubSearch.ownedRepositoryResults = [];
+            githubSearch.globalRepositoryResults = [];
+            if (githubSearch.ready) githubSearch.fetchPullRequests();
+        } else {
+            repositorySearchDebounce.restart();
+        }
+    }
     onSelectedItemChanged: { if (githubSearch.active) githubSearch.updatePreview(); }
     onItemsChanged: { if (githubSearch.active) githubSearch.updatePreview(); }
-    onActiveChanged: { if (githubSearch.active && githubSearch.ready) githubSearch.fetchPullRequests(); }
-    onReadyChanged: { if (githubSearch.active && githubSearch.ready) githubSearch.fetchPullRequests(); }
-
-    Component.onCompleted: githubAuthProc.running = true
+    onActiveChanged: {
+        if (!githubSearch.active) {
+            githubSearch.clear();
+            return;
+        }
+        githubSearch.ensureReady();
+        if (githubSearch.query.trim().length === 0) {
+            if (githubSearch.ready) githubSearch.fetchPullRequests();
+        } else {
+            repositorySearchDebounce.restart();
+        }
+    }
+    onReadyChanged: {
+        if (!githubSearch.active || !githubSearch.ready) return;
+        if (githubSearch.query.trim().length === 0) githubSearch.fetchPullRequests();
+        else repositorySearchDebounce.restart();
+    }
+    onOwnerFilterChanged: {
+        if (githubSearch.active && githubSearch.query.trim().length > 0) repositorySearchDebounce.restart();
+    }
 
     Process {
         id: githubAuthProc
@@ -220,6 +293,7 @@ Item {
         command: ["sh", "-c", "command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1 && echo ok || true"]
         stdout: StdioCollector {
             onStreamFinished: {
+                if (!githubSearch.active) return;
                 githubSearch.ready = this.text.indexOf("ok") >= 0;
                 if (githubSearch.ready) {
                     identityProc.running = false;
@@ -237,6 +311,7 @@ Item {
             + "gh api user/orgs --jq 'map(.login)|join(\",\")' 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
+                if (!githubSearch.ready) return;
                 const lines = this.text.split("\n");
                 githubSearch.userLogin = (lines[0] || "").trim();
                 const orgsLine = (lines[1] || "").trim();
@@ -257,24 +332,34 @@ Item {
         onTriggered: {
             const q = githubSearch.query.trim();
             if (!githubSearch.active || q.length === 0) {
+                githubSearch._searchGen += 1;
+                ownedRepositorySearchProc.running = false;
+                globalRepositorySearchProc.running = false;
                 githubSearch.ownedRepositoryResults = [];
                 githubSearch.globalRepositoryResults = [];
                 return;
             }
+            githubSearch._searchGen += 1;
+            const gen = githubSearch._searchGen;
             if (githubSearch.ownerFilter) {
-                ownedRepositorySearchProc.command = ["gh", "search", "repos", q,
-                                                     "--owner", githubSearch.ownerFilter,
-                                                     "--json", "fullName,description,url,stargazersCount,language",
-                                                     "--limit", "10"];
                 ownedRepositorySearchProc.running = false;
+                ownedRepositorySearchProc.gen = gen;
+                ownedRepositorySearchProc.query = q;
+                ownedRepositorySearchProc.command = ["gh", "search", "repos", q,
+                                                      "--owner", githubSearch.ownerFilter,
+                                                      "--json", "fullName,description,url,stargazersCount,language",
+                                                      "--limit", "10"];
                 ownedRepositorySearchProc.running = true;
             } else {
+                ownedRepositorySearchProc.running = false;
                 githubSearch.ownedRepositoryResults = [];
             }
-            globalRepositorySearchProc.command = ["gh", "search", "repos", q,
-                                                  "--json", "fullName,description,url,stargazersCount,language",
-                                                  "--limit", "20"];
             globalRepositorySearchProc.running = false;
+            globalRepositorySearchProc.gen = gen;
+            globalRepositorySearchProc.query = q;
+            globalRepositorySearchProc.command = ["gh", "search", "repos", q,
+                                                   "--json", "fullName,description,url,stargazersCount,language",
+                                                   "--limit", "20"];
             globalRepositorySearchProc.running = true;
         }
     }
@@ -285,61 +370,98 @@ Item {
 
     Process {
         id: ownedRepositorySearchProc
+        property int gen: 0
+        property string query: ""
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.ownedRepositoryResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (ownedRepositorySearchProc.gen !== githubSearch._searchGen
+                    || ownedRepositorySearchProc.query !== githubSearch.query.trim()
+                    || !githubSearch.active) return;
+                githubSearch.ownedRepositoryResults = githubSearch.parseResults(this.text);
+            }
         }
     }
 
     Process {
         id: globalRepositorySearchProc
+        property int gen: 0
+        property string query: ""
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.globalRepositoryResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (globalRepositorySearchProc.gen !== githubSearch._searchGen
+                    || globalRepositorySearchProc.query !== githubSearch.query.trim()
+                    || !githubSearch.active) return;
+                githubSearch.globalRepositoryResults = githubSearch.parseResults(this.text);
+            }
         }
     }
 
     Process {
         id: authoredPullRequestsProc
+        property int gen: 0
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.authoredPullRequestResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (authoredPullRequestsProc.gen !== githubSearch._pullRequestGen || !githubSearch.active) return;
+                githubSearch.authoredPullRequestResults = githubSearch.parseResults(this.text);
+            }
         }
     }
     Process {
         id: reviewRequestedPullRequestsProc
+        property int gen: 0
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.reviewRequestedPullRequestResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (reviewRequestedPullRequestsProc.gen !== githubSearch._pullRequestGen || !githubSearch.active) return;
+                githubSearch.reviewRequestedPullRequestResults = githubSearch.parseResults(this.text);
+            }
         }
     }
     Process {
         id: mentionedPullRequestsProc
+        property int gen: 0
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.mentionedPullRequestResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (mentionedPullRequestsProc.gen !== githubSearch._pullRequestGen || !githubSearch.active) return;
+                githubSearch.mentionedPullRequestResults = githubSearch.parseResults(this.text);
+            }
         }
     }
     Process {
         id: assignedPullRequestsProc
+        property int gen: 0
         running: false
         command: ["gh"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.assignedPullRequestResults = githubSearch.parseResults(this.text); }
+            onStreamFinished: {
+                if (assignedPullRequestsProc.gen !== githubSearch._pullRequestGen || !githubSearch.active) return;
+                githubSearch.assignedPullRequestResults = githubSearch.parseResults(this.text);
+            }
         }
     }
 
     Process {
         id: repositoryReadmeProc
+        property int gen: 0
+        property string url: ""
         running: false
         command: ["true"]
         stdout: StdioCollector {
-            onStreamFinished: { githubSearch.previewText = this.text || "NO README"; }
+            onStreamFinished: {
+                if (repositoryReadmeProc.gen !== githubSearch._previewGen
+                    || repositoryReadmeProc.url !== githubSearch.previewUrl
+                    || !githubSearch.active) return;
+                githubSearch.previewText = this.text || "NO README";
+            }
         }
     }
 }
