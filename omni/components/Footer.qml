@@ -18,7 +18,6 @@ Item {
             const it = footer.omni.filteredItems[footer.omni.selectedIndex];
             if (!it) return "";
             if (it.isCategory)  return "→ open " + it.target.toLowerCase();
-            if (it.isProcess)   return "↵ kill " + (it.pid || "");
             if (it.isTheme)     return "↵ omarchy-theme-set " + (it.themeName || "");
             return "$ " + it.exec;
         }

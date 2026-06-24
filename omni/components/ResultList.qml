@@ -11,7 +11,6 @@ Item {
 
     required property var omni
     required property var bookmarks
-    required property var processes
     required property var themes
     required property var ollamaChat
 
@@ -200,7 +199,6 @@ Item {
                 }
                 if (o.favMode)  return "NO FAVOURITES — CTRL+S TO STAR";
                 if (o.histMode) return "NO HISTORY YET";
-                if (o.procMode)  return rl.processes.running ? "LOADING…" : "NO PROCESSES";
                 if (o.themeMode) return rl.themes.loaded ? "NO THEMES MATCH" : "LOADING THEMES…";
                 return o.appsLoaded ? "NOTHING MATCHES" : "INDEXING APPS…";
             }

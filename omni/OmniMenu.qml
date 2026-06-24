@@ -9,7 +9,7 @@ import "components" as Omni
 // `omarchy-menu` action, scored against title, category, and per-entry
 // synonyms (so "wallpaper" finds Background, "reboot" finds Restart).
 // Drill-down rows pivot the list to a category, fd file search, GitHub repo
-// search, processes, or themes. Toggle via:
+// search or themes. Toggle via:
 //   omarchy-shell shell toggle omni '{}'
 //
 // Source layout: this file is the entry and keeps all state (search
@@ -94,7 +94,6 @@ Item {
     readonly property bool githubMode: root.categoryFilter === Data.githubCategory
     readonly property bool favMode:  root.categoryFilter === Data.favCategory
     readonly property bool histMode: root.categoryFilter === Data.histCategory
-    readonly property bool procMode:  root.categoryFilter === Data.procCategory
     readonly property bool themeMode: root.categoryFilter === Data.themeCategory
     // In the standalone plugin, Quick is a normal command category. The rich
     // live-tile grid belongs to the personal desktop config because it depends
@@ -207,16 +206,6 @@ Item {
     readonly property alias previewMeta:  fileSearch.previewMeta
     readonly property alias previewKind:  fileSearch.previewKind
 
-    Processes {
-        id: processes
-        active: root.procMode && !root.tldrMode && !root.llmMode
-        selectedItem: root.filteredItems[root.selectedIndex] || null
-    }
-    readonly property alias procItems:    processes.items
-    readonly property alias procRunning:  processes.running
-    readonly property alias procPreviewText: processes.previewText
-    readonly property alias procPreviewPid:  processes.previewPid
-
     Themes {
         id: themes
         active: root.themeMode && !root.tldrMode && !root.llmMode
@@ -253,7 +242,7 @@ Item {
     readonly property alias chatSubmitted: ollamaChat.submitted
     readonly property alias chatModel:     ollamaChat.model_
 
-    readonly property bool previewActive: root.tldrMode || root.llmMode || root.fileMode || root.githubMode || root.procMode || root.themeMode
+    readonly property bool previewActive: root.tldrMode || root.llmMode || root.fileMode || root.githubMode || root.themeMode
     readonly property bool previewHasContent: {
         if (root.tldrMode) return root.tldrPreview !== "";
         if (root.llmMode) {
@@ -268,7 +257,6 @@ Item {
         }
         if (root.fileMode || root.githubMode)
             return root.previewPath !== "" || root.githubPreviewUrl !== "";
-        if (root.procMode) return processes.previewPid !== "";
         if (root.themeMode) {
             const it = root.filteredItems[root.selectedIndex];
             return !!(it && it.swatches && it.swatches.length > 0);
@@ -333,9 +321,9 @@ Item {
         githubSearch.clear();
         tldrSearch.clear();
         ollamaChat.clear();
-        // Processes/Themes own their own clear()-on-deactivate via their
-        // `active` binding, so the shell doesn't have to nudge them when
-        // the filter changes — they react automatically.
+        // Themes own their own clear()-on-deactivate via their `active`
+        // binding, so the shell doesn't have to nudge them when the filter
+        // changes - they react automatically.
     }
 
     // ---------- Icon resolution ----------
@@ -377,11 +365,6 @@ Item {
             root.categoryFilter = item.target;
             root.query = "";
             root.selectedIndex = 0;
-            return;
-        }
-        // Process kill — refresh stays in-mode so you can chain kills.
-        if (item.isProcess) {
-            processes.killPid(item.pid, false);
             return;
         }
         // Theme apply — fire and forget; omarchy-theme-set rebuilds
@@ -568,13 +551,12 @@ Item {
         const filter = root.categoryFilter;
         const cap = root.maxResults;
 
-        // Favourites/history/proc/theme drill-ins draw from their
-        // owning component; scoring still applies so typing inside the
-        // drill filters live.
+        // Favourites/history/theme drill-ins draw from their owning
+        // component; scoring still applies so typing inside the drill
+        // filters live.
         let pool;
         if (root.favMode)        pool = bookmarks.favouriteItems;
         else if (root.histMode)  pool = bookmarks.historyItems;
-        else if (root.procMode)  pool = root.procItems;
         else if (root.themeMode) pool = root.themeItems;
         else if (filter !== "")  pool = root.allItems.filter(it => it.category === filter);
         else                     pool = root.navRows.concat(root.allItems);
@@ -583,11 +565,10 @@ Item {
         // favourites, then leaf actions/apps. TUIs and themes are
         // skipped from this view to keep the cold open scannable -
         // they stay in `allItems` so the scored branch below still
-        // finds them when typed. Drill-in modes (fav/hist/proc/theme)
+        // finds them when typed. Drill-in modes (fav/hist/theme)
         // and category filters keep their existing pool unchanged.
         if (tokens.length === 0) {
-            if (root.favMode || root.histMode || root.procMode
-                || root.themeMode || filter !== "") {
+            if (root.favMode || root.histMode || root.themeMode || filter !== "") {
                 return pool.length <= cap ? pool : pool.slice(0, cap);
             }
             const favs = bookmarks.favouriteItems.slice(0, 5);
@@ -729,8 +710,8 @@ Item {
             // Card sits slightly above visual centre so the result list grows
             // downward without dragging the search field out of the eyeline.
             y: parent.height * 0.18
-            // Wide in any preview-bearing mode (file, github, processes,
-            // themes) so a ~520px preview pane fits next to the result
+            // Wide in any preview-bearing mode (file, GitHub, themes) so a
+            // ~520px preview pane fits next to the result
             // list; narrow 640 elsewhere — including Quick mode whether
             // collapsed or expanded — so opening a tile doesn't cause any
             // horizontal jump. The tile column compresses to 64px on the
@@ -980,7 +961,6 @@ Item {
                 Omni.HeaderBar {
                     id: headerBar
                     omni: root
-                    processes: processes
                     themes: themes
                     bookmarks: bookmarks
                 }
@@ -1027,7 +1007,6 @@ Item {
                         width: parent.width * listArea.listFraction
                         omni: root
                         bookmarks: bookmarks
-                        processes: processes
                         themes: themes
                         ollamaChat: ollamaChat
                     }

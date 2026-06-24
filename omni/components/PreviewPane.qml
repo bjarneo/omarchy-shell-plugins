@@ -3,10 +3,10 @@ import "../Data.js" as Data
 import "Format.js" as Fmt
 
 // Right-side preview pane. Shown when one of the preview-bearing modes
-// (file, GitHub, proc, theme, tldr, chat) is active. Surfaces a header
+// (file, GitHub, theme, tldr, chat) is active. Surfaces a header
 // (name + path/status), a hairline, and then a mode-specific body:
 // image / text / meta / tldr-RichText / chat-RichText / readme /
-// process detail / theme swatches.
+// theme swatches.
 //
 // The flickable + text edits are aliased so the OmniMenu key handler
 // can drive scrolling, selection, and clipboard copy from outside.
@@ -33,7 +33,6 @@ Item {
             if (o.tldrMode) return o.tldrTool;
             if (o.llmMode) return o.chatModel;
             if (o.githubMode) return o.githubPreviewTitle;
-            if (o.procMode) return it ? it.title : "";
             if (o.themeMode) return it ? it.title : "";
             return o.previewPath ? Data.basename(o.previewPath) : "";
         }
@@ -77,7 +76,6 @@ Item {
                            : "↵ done  ·  edit prompt and ↵ to ask again";
             }
             if (o.githubMode) return o.githubPreviewUrl;
-            if (o.procMode) return it ? ("pid " + (it.pid || "") + "  ·  ↵ kills (SIGTERM)") : "";
             if (o.themeMode) return it
                 ? (it.isActive ? "ACTIVE  ·  ↵ reapplies" : "↵ applies theme")
                 : "";
@@ -129,7 +127,6 @@ Item {
                     return o.chatRunning ? "STREAMING…" : "DONE";
                 }
                 if (o.githubMode) return "SELECT A REPO OR PR";
-                if (o.procMode)  return "SELECT A PROCESS";
                 if (o.themeMode) return "SELECT A THEME";
                 return o.query.length === 0 ? "PREVIEW APPEARS HERE" : "SELECT A FILE";
             }
@@ -359,19 +356,6 @@ Item {
             textFormat: Text.PlainText
             elide: Text.ElideRight
             maximumLineCount: Math.max(1, Math.floor(previewBody.height / 13))
-        }
-
-        // Process detail (cmdline + ps stats).
-        Text {
-            anchors.fill: parent
-            visible: pp.omni.procMode && pp.omni.procPreviewText !== ""
-            text: pp.omni.procPreviewText
-            color: pp.omni.foreground
-            font.family: pp.omni.mono
-            font.pixelSize: 10 * pp.omni.fontScale
-            lineHeight: 1.4
-            wrapMode: Text.Wrap
-            textFormat: Text.PlainText
         }
 
         // Theme preview image: themes ship a preview.png (lock screen

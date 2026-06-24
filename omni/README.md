@@ -2,7 +2,7 @@
 
 Standalone Omarchy shell command palette.
 
-Omni searches installed apps, Omarchy actions, files, themes, processes, GitHub repositories and pull requests, `tldr` pages, and local Ollama prompts from one overlay.
+Omni searches installed apps, Omarchy actions, files, themes, GitHub repositories and pull requests, `tldr` pages, and local Ollama prompts from one overlay.
 
 ## Install
 

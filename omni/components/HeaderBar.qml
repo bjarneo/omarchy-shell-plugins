@@ -6,7 +6,6 @@ Item {
     id: header
 
     required property var omni
-    property var processes: null
     property var themes:    null
     property var bookmarks: null
 
@@ -68,13 +67,6 @@ Item {
                 return total === 0
                     ? "NO HISTORY YET"
                     : total + " RECENT" + (total === 1 ? "" : "S");
-            }
-            if (o.procMode) {
-                const total = o.filteredItems.length;
-                if (header.processes && header.processes.running && total === 0) return "LOADING PROCESSES…";
-                return total === 0
-                    ? "NO PROCESSES"
-                    : total + " PROCESS" + (total === 1 ? "" : "ES");
             }
             if (o.themeMode) {
                 const total = o.filteredItems.length;

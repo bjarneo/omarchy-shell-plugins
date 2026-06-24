@@ -5,7 +5,6 @@ const fileCategory = "Files";
 const githubCategory = "GitHub";
 const favCategory = "Favourites";
 const histCategory = "History";
-const procCategory = "Processes";
 const themeCategory = "Themes";
 
 // fd already respects .gitignore, the global ignore file, and skips
@@ -82,7 +81,6 @@ const categoryNav = [
     { title: "Capture", icon: "󰄀", category: "Browse", isCategory: true, target: "Capture",     keywords: "capture screenshot screenrecord ocr text extraction color picker" },
     { title: "Share",   icon: "󰒖", category: "Browse", isCategory: true, target: "Share",       keywords: "share clipboard file folder receive localsend send transfer" },
     { title: "Learn",   icon: "󰂺", category: "Browse", isCategory: true, target: "Learn",       keywords: "learn docs manual help keybindings wiki cheatsheet" },
-    { title: "Processes", icon: "󰍛", category: "Browse", isCategory: true, target: procCategory,  keywords: "processes process kill task manager ps top htop activity cpu memory" },
     { title: "Themes",    icon: "󰸌", category: "Browse", isCategory: true, target: themeCategory, keywords: "themes theme palette color swatch switcher dark light apply" }
 ];
 

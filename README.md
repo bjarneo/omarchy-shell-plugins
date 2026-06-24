@@ -42,14 +42,14 @@ Omarchy rejects symlinked plugin folders. Use real copied directories for local 
 
 ### `omni`
 
-Standalone Omarchy shell command palette for apps, Omarchy actions, files, themes, processes, GitHub search, `tldr`, and local Ollama prompts.
+Standalone Omarchy shell command palette for apps, Omarchy actions, files, themes, GitHub search, `tldr`, and local Ollama prompts.
 
 Features:
 
 - Overlay plugin enabled with `omarchy plugin enable omni`
 - Searches installed desktop apps and a bundled Omarchy action index
-- Drill-down categories for Quick, Apps, Files, GitHub, Favourites, History, Processes, and Themes
-- File previews, theme swatches, process previews, GitHub repo/PR previews, `tldr` docs, and local Ollama prompt previews
+- Drill-down categories for Quick, Apps, Files, GitHub, Favourites, History, and Themes
+- File previews, theme swatches, GitHub repo/PR previews, `tldr` docs, and local Ollama prompt previews
 - Uses Omarchy shell shared colors, font settings, and state fills through `qs.Commons`
 - Keyboard controls: arrows or `j`/`k` to move, `Enter` to launch, `Esc` to unwind/close, `Ctrl+S` to favourite
 
