@@ -132,15 +132,41 @@ omarchy-restart-shell
 
 See `cliamp/README.md` for details.
 
+### `taildrop`
+
+Taildrop bar widget for sending and receiving files on personal Tailscale devices.
+
+Features:
+
+- Multi-file send with confirmation and cancellation
+- Incoming files saved to `~/Downloads`
+- Eligible devices from `tailscale file cp --targets`
+
+Install from this checkout:
+
+```bash
+mkdir -p ~/.config/omarchy/plugins
+cp -a taildrop ~/.config/omarchy/plugins/taildrop
+omarchy plugin validate ~/.config/omarchy/plugins/taildrop
+omarchy plugin rescan
+omarchy bar plugin add taildrop --section right
+omarchy restart shell
+```
+
+Taildrop must be enabled for the tailnet in the Tailscale admin console. See `taildrop/README.md` for details.
+
 ## Validate
 
 ```bash
 omarchy plugin validate omni
 omarchy plugin validate quickapps-hud
 omarchy plugin validate cliamp
+omarchy plugin validate taildrop
 qmllint omni/*.qml omni/components/*.qml
 qmllint quickapps-hud/*.qml
 qmllint cliamp/*.qml
+qmllint taildrop/*.qml
+node taildrop/Model.test.js
 ```
 
 ## License

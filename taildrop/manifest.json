@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "taildrop",
+  "name": "Taildrop",
+  "version": "0.1.0",
+  "author": "bjarneo",
+  "license": "MIT",
+  "description": "Send files to eligible Tailscale devices from the Omarchy bar.",
+  "kinds": ["service", "bar-widget"],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "Widget.qml"
+  },
+  "barWidget": {
+    "displayName": "Taildrop",
+    "description": "Send files to eligible Tailscale devices.",
+    "category": "Network",
+    "allowMultiple": false,
+    "defaults": {
+      "refreshIntervalSec": 30,
+      "notifyOnComplete": true
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 5,
+        "max": 3600,
+        "step": 5,
+        "defaultValue": 30
+      },
+      {
+        "key": "notifyOnComplete",
+        "type": "boolean",
+        "label": "Notify when a transfer finishes",
+        "defaultValue": true
+      }
+    ]
+  }
+}
