@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "codex-usage",
+  "name": "Codex Usage",
+  "version": "0.1.0",
+  "author": "bjarneo",
+  "license": "MIT",
+  "description": "Track ChatGPT plan limits for Codex from the Omarchy bar.",
+  "kinds": ["service", "bar-widget"],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "Widget.qml"
+  },
+  "barWidget": {
+    "displayName": "Codex Usage",
+    "description": "Show Codex usage limits and reset times.",
+    "category": "System",
+    "allowMultiple": false,
+    "defaults": {
+      "refreshIntervalSec": 60
+    },
+    "schema": [
+      {
+        "key": "refreshIntervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 30,
+        "max": 3600,
+        "step": 30,
+        "defaultValue": 60
+      }
+    ]
+  }
+}

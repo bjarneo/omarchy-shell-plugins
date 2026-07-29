@@ -132,28 +132,28 @@ omarchy-restart-shell
 
 See `cliamp/README.md` for details.
 
-### `taildrop`
+### `codex-usage`
 
-Taildrop bar widget for sending and receiving files on personal Tailscale devices.
+Codex bar widget that tracks your active ChatGPT plan's usage limits and reset times.
 
 Features:
 
-- Multi-file send with confirmation and cancellation
-- Incoming files saved to `~/Downloads`
-- Eligible devices from `tailscale file cp --targets`
+- Shows the primary limit's remaining percentage with an OpenAI Blossom mark
+- Shows primary and secondary capacity, reset times, and plan in a panel
+- Refreshes through Codex's local app server without reading credentials itself
 
 Install from this checkout:
 
 ```bash
 mkdir -p ~/.config/omarchy/plugins
-cp -a taildrop ~/.config/omarchy/plugins/taildrop
-omarchy plugin validate ~/.config/omarchy/plugins/taildrop
+cp -a codex-usage ~/.config/omarchy/plugins/codex-usage
+omarchy plugin validate ~/.config/omarchy/plugins/codex-usage
 omarchy plugin rescan
-omarchy bar plugin add taildrop --section right
+omarchy bar plugin add codex-usage --section right
 omarchy restart shell
 ```
 
-Taildrop must be enabled for the tailnet in the Tailscale admin console. See `taildrop/README.md` for details.
+Codex CLI must be available on `PATH` and signed in with `codex login`. See `codex-usage/README.md` for details.
 
 ## Validate
 
@@ -161,12 +161,12 @@ Taildrop must be enabled for the tailnet in the Tailscale admin console. See `ta
 omarchy plugin validate omni
 omarchy plugin validate quickapps-hud
 omarchy plugin validate cliamp
-omarchy plugin validate taildrop
+omarchy plugin validate codex-usage
 qmllint omni/*.qml omni/components/*.qml
 qmllint quickapps-hud/*.qml
 qmllint cliamp/*.qml
-qmllint taildrop/*.qml
-node taildrop/Model.test.js
+qmllint codex-usage/*.qml
+node codex-usage/Model.test.js
 ```
 
 ## License
