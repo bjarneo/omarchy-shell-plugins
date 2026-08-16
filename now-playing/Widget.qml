@@ -7,7 +7,7 @@ import qs.Ui
 // the first one with a track. Absent media, absent widget.
 BarWidget {
   id: root
-  moduleName: "whiterose.media"
+  moduleName: "now-playing"
 
   readonly property var player: {
     var players = Mpris.players ? Mpris.players.values : []

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "whiterose.media",
-  "name": "Whiterose Media",
+  "id": "now-playing",
+  "name": "Now Playing",
   "version": "1.0.0",
   "author": "bjarneo",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "kinds": ["bar-widget"],
   "entryPoints": { "barWidget": "Widget.qml" },
   "barWidget": {
-    "displayName": "Whiterose media",
+    "displayName": "Now Playing",
     "description": "Now-playing title with playback controls",
     "category": "Media",
     "allowMultiple": false,
