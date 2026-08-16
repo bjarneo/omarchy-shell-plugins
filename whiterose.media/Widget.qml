@@ -61,7 +61,12 @@ BarWidget {
     }
 
     Rectangle {
-      anchors.fill: parent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.bottom: parent.bottom
+      anchors.topMargin: 2
+      anchors.bottomMargin: 2
       z: -1
       radius: height / 2
       color: root.pillFill
