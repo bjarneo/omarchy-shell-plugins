@@ -55,8 +55,8 @@ If ffmpeg capture fails, the analyzer falls back to `cliamp visstream`. If both 
 After this repository has been added as a trusted Omarchy source:
 
 ```bash
-omarchy plugin source add https://github.com/bjarneo/omarchy-shell-plugins --as bjarneo
-omarchy plugin add cliamp-player --from bjarneo --enable
+omarchy plugin source add https://github.com/dylanmccavitt/omarchy-cliamp-player --as dylanmccavitt
+omarchy plugin add cliamp-player --from dylanmccavitt --enable
 omarchy restart shell
 ```
 
@@ -191,6 +191,12 @@ cliamp status --json | jq -r '.visualizer'
 ```
 
 The expected final output is `ClassicLED`.
+
+## Relationship to the `cliamp` overlay
+
+This repository's `cliamp-player` is an independent `bar-widget` plugin. The existing `cliamp` project in [`bjarneo/omarchy-shell-plugins`](https://github.com/bjarneo/omarchy-shell-plugins/tree/main/cliamp) is a persistent `overlay` plugin with a different ID, entry point, process model, and user interface. The two can coexist, although enabling both produces two now-playing cards.
+
+The initial Winamp-style segmented-analyzer behavior and now-playing concept were informed by that MIT-licensed plugin. Its copyright notice is retained in this repository's `LICENSE`. The interactive player, command controller, demand-driven analyzer, visualizer-mode renderer, bar integration, and portability hardening are separate implementations.
 
 ## License
 

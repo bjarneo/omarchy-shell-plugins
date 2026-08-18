@@ -26,8 +26,14 @@ Scope {
   property int pendingVolume: 0
   property string pendingRepeatMode: "off"
   property string visualizerMode: "Bars"
-  property bool visualizerChangePending: false
   property var visualizerOptions: [{ value: "Bars", label: "Bars" }]
+  property var commandQueue: []
+  property var activeCommand: []
+  readonly property bool commandPending: commandProc.running
+    || commandQueue.length > 0
+    || commandRefresh.running
+    || volumeCommit.running
+    || repeatCommit.running
 
   readonly property real progress: durationSeconds > 0
     ? Math.max(0, Math.min(1, positionSeconds / durationSeconds))
@@ -96,7 +102,6 @@ Scope {
     }
     if (!found || mode === visualizerMode) return
     visualizerMode = mode
-    visualizerChangePending = true
     _runCommand(["vis", mode])
   }
 
@@ -107,8 +112,18 @@ Scope {
   }
 
   function _runCommand(args) {
-    Quickshell.execDetached(["cliamp"].concat(args))
-    commandRefresh.restart()
+    var next = commandQueue.slice()
+    next.push(args.slice())
+    commandQueue = next
+    _runNextCommand()
+  }
+
+  function _runNextCommand() {
+    if (commandProc.running || commandQueue.length === 0) return
+    var next = commandQueue.slice()
+    activeCommand = ["cliamp"].concat(next.shift())
+    commandQueue = next
+    commandProc.running = true
   }
 
   function togglePlayback() { _runCommand(["toggle"]) }
@@ -163,7 +178,6 @@ Scope {
     repeatMode = "Off"
     pendingRepeatMode = "off"
     visualizerMode = "Bars"
-    visualizerChangePending = false
     trackKey = ""
     _syncAnalyzer()
   }
@@ -192,6 +206,8 @@ Scope {
       var changed = hasIdentity && nextKey !== trackKey
 
       running = true
+      if (commandPending) return
+
       playing = state === "playing"
       paused = state === "paused"
       title = nextTitle
@@ -200,20 +216,13 @@ Scope {
       positionSeconds = Number(data.position || 0)
       durationSeconds = Number(data.duration || track.duration_secs || 0)
       var reportedVolume = Math.round(Number(data.volume || 0))
-      if (!volumeCommit.running && !commandRefresh.running) {
-        volume = reportedVolume
-        pendingVolume = reportedVolume
-      }
+      volume = reportedVolume
+      pendingVolume = reportedVolume
       shuffle = Boolean(data.shuffle)
       var reportedRepeat = String(data.repeat || "Off")
-      if (!repeatCommit.running && !commandRefresh.running) {
-        repeatMode = reportedRepeat
-        pendingRepeatMode = reportedRepeat.toLowerCase()
-      }
-      if (!visualizerChangePending || !commandRefresh.running) {
-        visualizerMode = String(data.visualizer || "Bars")
-        visualizerChangePending = false
-      }
+      repeatMode = reportedRepeat
+      pendingRepeatMode = reportedRepeat.toLowerCase()
+      visualizerMode = String(data.visualizer || "Bars")
       trackKey = hasIdentity ? nextKey : ""
 
       _syncAnalyzer()
@@ -283,6 +292,8 @@ Scope {
   }
 
   Component.onDestruction: {
+    commandQueue = []
+    commandProc.running = false
     statusProc.running = false
     analyzerProc.running = false
     visualizerListProc.running = false
@@ -324,14 +335,31 @@ Scope {
 
   Timer {
     id: commandRefresh
-    interval: 180
+    interval: 80
     repeat: false
     onTriggered: {
-      if (statusProc.running) {
+      if (commandProc.running || commandQueue.length > 0 || statusProc.running) {
         commandRefresh.restart()
         return
       }
       root.poll()
+    }
+  }
+
+  Process {
+    id: commandProc
+    command: root.activeCommand
+    running: false
+    stdout: StdioCollector {}
+    stderr: StdioCollector {}
+    onExited: function(exitCode) {
+      if (exitCode !== 0) {
+        var detail = String(stderr.text || "").trim()
+        console.warn("cliamp-player command:", detail || root.activeCommand.join(" "))
+      }
+      root.activeCommand = []
+      root._runNextCommand()
+      commandRefresh.restart()
     }
   }
 
