@@ -132,6 +132,34 @@ omarchy-restart-shell
 
 See `cliamp/README.md` for details.
 
+### `cliamp-player`
+
+Theme-aware `cliamp` bar player with native controls, a live spectrum, and song-change notifications.
+
+<img src="screenshots/cliamp-player/classic-led.png" alt="Cliamp Player with the Classic LED visualizer" width="420">
+
+Features:
+
+- Horizontal and vertical Omarchy bar layouts
+- Popup controls for playback, seeking, shuffle, repeat, volume, and cliamp visualizer modes
+- Live 16-band spectrum through `ffmpeg`, with `cliamp visstream` fallback
+- Mode-specific Canvas renderings for all built-in cliamp visualizers
+- Top-right now-playing card with hover-aware automatic dismissal
+
+Install from this checkout:
+
+```bash
+mkdir -p ~/.config/omarchy/plugins
+rm -rf ~/.config/omarchy/plugins/cliamp-player
+cp -a cliamp-player ~/.config/omarchy/plugins/cliamp-player
+omarchy plugin validate ~/.config/omarchy/plugins/cliamp-player
+omarchy plugin rescan
+omarchy plugin enable cliamp-player
+omarchy restart shell
+```
+
+See `cliamp-player/README.md` for requirements, settings, and controls.
+
 ### `codex-usage`
 
 Codex bar widget that tracks your active ChatGPT plan's usage limits and reset times.
@@ -161,10 +189,13 @@ Codex CLI must be available on `PATH` and signed in with `codex login`. See `cod
 omarchy plugin validate omni
 omarchy plugin validate quickapps-hud
 omarchy plugin validate cliamp
+omarchy plugin validate cliamp-player
 omarchy plugin validate codex-usage
 qmllint omni/*.qml omni/components/*.qml
 qmllint quickapps-hud/*.qml
 qmllint cliamp/*.qml
+qmllint cliamp-player/*.qml
+python3 -c 'from pathlib import Path; p = Path("cliamp-player/analyzer.py"); compile(p.read_bytes(), str(p), "exec")'
 qmllint codex-usage/*.qml
 node codex-usage/Model.test.js
 ```

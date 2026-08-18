@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "cliamp-player",
+  "name": "Cliamp Player",
+  "version": "0.1.0",
+  "author": "dylanmccavitt",
+  "license": "MIT",
+  "description": "Theme-aware cliamp bar player with live spectrum and song-change notifications",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Widget.qml"
+  },
+  "barWidget": {
+    "displayName": "Cliamp Player",
+    "description": "Live spectrum, playback controls, and automatic now-playing card",
+    "category": "Media",
+    "allowMultiple": false,
+    "defaults": {
+      "maxWidth": 200,
+      "showArtist": true,
+      "autoHideMs": 4500
+    },
+    "schema": [
+      {
+        "key": "maxWidth",
+        "type": "integer",
+        "label": "Max label width (px)",
+        "min": 80,
+        "max": 400,
+        "step": 10,
+        "defaultValue": 200
+      },
+      {
+        "key": "showArtist",
+        "type": "boolean",
+        "label": "Show artist name in bar",
+        "defaultValue": true
+      },
+      {
+        "key": "autoHideMs",
+        "type": "integer",
+        "label": "Now-playing card duration (ms)",
+        "min": 1500,
+        "max": 15000,
+        "step": 500,
+        "defaultValue": 4500
+      }
+    ]
+  }
+}
