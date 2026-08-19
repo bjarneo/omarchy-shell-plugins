@@ -220,6 +220,10 @@ Item {
 
     readonly property string homeDir: Quickshell.env("HOME")
 
+    // Engine used by the web-search fallback row. Empty env falls through to
+    // Data.defaultSearchUrl inside Data.searchUrl().
+    readonly property string searchUrlTemplate: Quickshell.env("OMNI_SEARCH_URL")
+
     function open(payloadJson) {
         let payload = ({});
         try { payload = JSON.parse(payloadJson || "{}"); } catch (e) { payload = ({}); }
@@ -416,7 +420,12 @@ Item {
             root.dismiss();
             return;
         }
-        bookmarks.record(item);
+        // Web searches are deliberately not recorded. itemKey() falls back to
+        // `exec`, which embeds the encoded query, so every distinct search
+        // would be a distinct key — a handful of them would evict the whole
+        // 50-entry history. Favourites/history are for things you return to,
+        // and the browser already keeps its own search history.
+        if (!item.isWebSearch) bookmarks.record(item);
         // TUI commands need a real terminal — fzf, sudo prompts, and bash
         // `read` fail when launched detached. `item.tui` holds the wrapper
         // command name (omarchy-launch-tui or omarchy-launch-floating-…).
@@ -583,6 +592,17 @@ Item {
         const lim = Math.min(scored.length, cap);
         const out = new Array(lim);
         for (let j = 0; j < lim; j++) out[j] = scored[j].item;
+
+        // Nothing in the index matched — offer the query to the web rather
+        // than dead-ending on "NOTHING MATCHES". Only in the unfiltered view:
+        // inside a drill-in the user asked for that category specifically, and
+        // an unrelated web row there would be noise. Gated on appsLoaded so a
+        // query typed during the initial .desktop scan still shows the
+        // "INDEXING APPS…" state instead of prematurely giving up.
+        if (out.length === 0 && filter === "" && root.appsLoaded
+            && !root.favMode && !root.histMode && !root.themeMode) {
+            return [Data.webSearchItem(root.searchUrlTemplate, root.query.trim())];
+        }
         return out;
     }
 

@@ -86,6 +86,39 @@ Useful keys:
 - `Ctrl+S` favourites the selected action.
 - `Ctrl++` / `Ctrl+-` changes font scale.
 
+## Web Search Fallback
+
+When a query matches nothing in the index, Omni offers it to the web instead of
+dead-ending on `NOTHING MATCHES`:
+
+```
+zqx wombat lifetimes            Search the web for zqx wombat lifetimes    WEB
+```
+
+`Enter` opens the search with `xdg-open`, so it lands in the default browser —
+a new tab in the running window, not a new window, the same way the Files and
+GitHub rows open their targets.
+
+The row only appears in the unfiltered view. Inside a drill-down (Apps, Files,
+Themes, Favourites, History) you asked for that category specifically, so an
+unrelated web row there would just be noise.
+
+DuckDuckGo is the default because it needs no account or API key. Override it
+with `OMNI_SEARCH_URL`, where every `%s` is replaced by the URL-encoded query:
+
+```bash
+OMNI_SEARCH_URL='https://www.google.com/search?q=%s'
+OMNI_SEARCH_URL='https://kagi.com/search?q=%s'
+```
+
+Set it where the shell will see it — `~/.config/environment.d/omni.conf` or
+`uwsm` env, not an interactive shell rc. A template with no `%s` falls back to
+the default rather than opening the same query-less page every time.
+
+Web searches are deliberately kept out of History and Favourites: every distinct
+query would be a distinct entry and a handful of them would evict the 50-entry
+history. The browser already keeps its own search history.
+
 ## Styling
 
 Omni uses Omarchy shell's shared `qs.Commons` styling: popup background/text, shell font, corner radius, and state fills from `Style`. Selection and borders use the shell foreground/text state color, so warning-colored theme accents do not make the palette look like an error dialog.

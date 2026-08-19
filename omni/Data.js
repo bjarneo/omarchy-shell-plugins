@@ -298,6 +298,40 @@ function openUrl(url) {
     return "xdg-open " + shellQuote(url);
 }
 
+// Engine for the web-search fallback row. DuckDuckGo is the default because
+// it needs no account, no API key, and no region setup, so it resolves for
+// every user out of the box. Override with OMNI_SEARCH_URL, where every `%s`
+// is replaced by the URL-encoded query:
+//   OMNI_SEARCH_URL='https://www.google.com/search?q=%s'
+const defaultSearchUrl = "https://duckduckgo.com/?q=%s";
+
+// split/join rather than String.replace: the replacement is user text, and
+// replace() would interpret `$&`/`$1` sequences inside it as backreferences.
+// Falls back to the default when the override carries no placeholder, so a
+// malformed OMNI_SEARCH_URL degrades to a working search instead of opening
+// the same query-less page every time.
+function searchUrl(template, query) {
+    const t = String(template || "");
+    const url = t.indexOf("%s") >= 0 ? t : defaultSearchUrl;
+    return url.split("%s").join(encodeURIComponent(String(query || "")));
+}
+
+// Synthetic row shown when nothing in the index matches. `isWebSearch` keeps
+// it out of history in OmniMenu.activate(); `exec` runs through the normal
+// launcher, so it opens in the default browser exactly like the file and
+// GitHub rows do.
+function webSearchItem(template, query) {
+    return {
+        title: "Search the web for " + query,
+        comment: "open " + searchUrl(template, query) + " in the default browser",
+        keywords: "",
+        category: "Web",
+        icon: "󰖟",
+        isWebSearch: true,
+        exec: openUrl(searchUrl(template, query))
+    };
+}
+
 function stripJsonc(raw) {
     const src = String(raw || "");
     let out = "";
